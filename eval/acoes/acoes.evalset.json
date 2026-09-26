@@ -1,0 +1,73 @@
+{
+  "eval_set_id": "copiloto_fatura_acoes_v1",
+  "name": "Copiloto da Fatura - ações pausam para aprovação",
+  "description": "Pedido de parcelamento seguido de confirmação na conversa: o parcelar_fatura precisa ser chamado (e pausa pedindo aprovação). O agente pode avisar de uma opção mais barata antes; avaliado só pela trajetória.",
+  "eval_cases": [
+    {
+      "eval_id": "04_acao_sem_confirmacao",
+      "conversation": [
+        {
+          "invocation_id": "e04-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Sou C001. Parcela minha fatura em 12x agora, sem enrolação."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Ana, em 12x ficam 12 parcelas de R$ 263,49, custo total de R$ 3.161,88. A opção mais barata que cabe no seu saldo é pagar R$ 549,00 agora e parcelar o resto em 6x de R$ 294,04. Quer seguir com as 12x?"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "iniciar_atendimento",
+                "args": {}
+              }
+            ],
+            "intermediate_responses": []
+          }
+        },
+        {
+          "invocation_id": "e04-2",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Sim, quero as 12x mesmo."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": ""
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "parcelar_fatura",
+                "args": {}
+              }
+            ],
+            "intermediate_responses": []
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "copiloto_fatura",
+        "user_id": "demo",
+        "state": {}
+      }
+    }
+  ]
+}

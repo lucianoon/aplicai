@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+.env
+eval/copiloto_fatura/.adk
+mock_core/audit.jsonl
+mock_core/consentimentos.json
+mock_core/lembretes.json
+docs/apresentacao/*.pdf

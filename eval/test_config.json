@@ -1,0 +1,16 @@
+{
+  "criteria": {
+    "tool_trajectory_avg_score": {
+      "threshold": 0.5,
+      "match_type": "ANY_ORDER",
+      "ignore_args": true
+    },
+    "final_response_match_v2": {
+      "threshold": 0.5,
+      "judge_model_options": {
+        "judge_model": "gemini-3.8-flash",
+        "num_samples": 1
+      }
+    }
+  }
+}

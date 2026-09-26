@@ -1,0 +1,14 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.adk/
+mock_core/audit.jsonl
+proativo/gatilhos.json
+# gerado (seed 42) na primeira carga do mock_core ou por `python -m data.gerar_dataset`
+data/clientes.json
+eval/.adk_eval_history/
+*.evalset_results.json
+mock_core/consentimentos.json
+mock_core/lembretes.json

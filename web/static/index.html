@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Itaú SuperApp | Gestor de Caixa & Copiloto da Fatura (IA.Í)</title>
+<style>
+  :root {
+    --itau-laranja: #ec7000;
+    --itau-laranja-hover: #d66400;
+    --itau-laranja-light: #fff5eb;
+    --itau-azul-header: #0a1f3d;
+    --itau-azul-escuro: #061426;
+    --itau-azul-medio: #003399;
+    --itau-fundo-app: #f4f6f9;
+    --itau-card-bg: #ffffff;
+    --itau-texto-primario: #111827;
+    --itau-texto-secundario: #5b6b82;
+    --itau-borda: #e2e8f0;
+    --itau-verde: #027a48;
+    --itau-verde-bg: #ecfdf3;
+    --itau-vermelho: #b42318;
+    --itau-vermelho-bg: #fef3f2;
+    --itau-amarelo: #b54708;
+    --itau-amarelo-bg: #fffaeb;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 8px;
+    --sombra-card: 0 4px 16px rgba(10, 31, 61, 0.05), 0 1px 3px rgba(10, 31, 61, 0.04);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0; min-height: 100vh;
+    background: #09121d;
+    display: flex; justify-content: center; align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--itau-texto-primario);
+  }
+
+  /* Dispositivo Mobile */
+  .device-frame {
+    width: 420px; height: 890px; max-height: 98vh; max-width: 100vw;
+    background: var(--itau-fundo-app); border-radius: 46px; overflow: hidden;
+    position: relative; display: flex; flex-direction: column;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 12px #1e293b, 0 0 0 14px #334155;
+  }
+  @media (max-width: 440px) {
+    .device-frame { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; box-shadow: none; }
+  }
+
+  /* Status Bar */
+  .status-bar {
+    height: 38px; background: var(--itau-azul-header); color: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 22px; font-size: 13px; font-weight: 600; z-index: 10;
+  }
+  .dynamic-island { width: 90px; height: 18px; background: #000; border-radius: 10px; }
+
+  /* Header do SuperApp Itaú */
+  .itau-app-bar {
+    background: var(--itau-azul-header); color: #fff; padding: 12px 18px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid var(--itau-laranja);
+  }
+  .header-brand-conta {
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+  }
+  .itau-mini-logo {
+    width: 36px; height: 36px; background: var(--itau-laranja); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 16px; color: #fff; letter-spacing: -0.5px;
+  }
+  .header-user-info b {
+    display: flex; align-items: center; gap: 6px; font-size: 14.5px; color: #fff;
+  }
+  .header-user-info span { font-size: 11px; opacity: 0.82; }
+  .badge-segmento {
+    font-size: 9.5px; background: rgba(255,255,255,0.18); padding: 2px 6px;
+    border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .btn-trocar-ambiente {
+    background: rgba(255,255,255,0.14); border: none; color: #fff;
+    font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    font-weight: 600; display: flex; align-items: center; gap: 4px;
+  }
+  .btn-trocar-ambiente:hover { background: rgba(255,255,255,0.25); }
+
+  /* Conteúdo Principal com Scroll */
+  .app-scroll-body {
+    flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+    padding: 16px; gap: 14px; position: relative;
+  }
+
+  /* Seção 1: Resumo Patrimonial */
+  .patrimonio-card {
+    background: var(--itau-card-bg); border-radius: var(--radius-lg); padding: 18px;
+    box-shadow: var(--sombra-card); border: 1px solid var(--itau-borda);
+  }
+  .patrimonio-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+  }
+  .patrimonio-header span { font-size: 11.5px; font-weight: 700; color: var(--itau-texto-secundario); text-transform: uppercase; }
+  .tag-status-conta {
+    font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+    background: var(--itau-verde-bg); color: var(--itau-verde);
+  }
+  .saldo-principal-row { margin-bottom: 12px; }
+  .label-saldo { font-size: 12px; color: var(--itau-texto-secundario); margin-bottom: 2px; }
+  .valor-saldo-corrente {
+    font-size: 27px; font-weight: 800; color: var(--itau-azul-header); letter-spacing: -0.5px;
+  }
+  .sub-saldos-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    padding-top: 12px; border-top: 1px dashed var(--itau-borda);
+  }
+  .sub-saldo-box { font-size: 12px; }
+  .sub-saldo-box span { color: var(--itau-texto-secundario); display: block; font-size: 11px; margin-bottom: 2px; }
+  .sub-saldo-box b { font-size: 13.5px; color: var(--itau-texto-primario); }
+
+  /* Seção 2: SMART CARD DO GESTOR DE CAIXA (PROATIVIDADE) */
+  .smart-card-gestor {
+    border-radius: var(--radius-lg); padding: 18px;
+    position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(236,112,0,0.12);
+    border: 1.5px solid var(--itau-laranja); background: #ffffff;
+    transition: all 0.2s ease;
+  }
+  .smart-card-gestor.tema-laranja {
+    border-color: #f59e0b; background: linear-gradient(180deg, #fffcf7 0%, #ffffff 100%);
+  }
+  .smart-card-gestor.tema-amarelo {
+    border-color: #f59e0b; background: linear-gradient(180deg, #fffdf5 0%, #ffffff 100%);
+  }
+  .smart-card-gestor.tema-vermelho {
+    border-color: #ef4444; background: linear-gradient(180deg, #fff8f8 0%, #ffffff 100%);
+  }
+  .smart-card-gestor.tema-verde {
+    border-color: #10b981; background: linear-gradient(180deg, #f7fdfa 0%, #ffffff 100%);
+  }
+
+  .smart-tag-row {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+  }
+  .smart-badge-proativo {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px;
+    font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--itau-laranja); background: var(--itau-laranja-light);
+    padding: 3px 8px; border-radius: 6px;
+  }
+  .smart-card-titulo {
+    font-size: 15px; font-weight: 800; color: var(--itau-azul-header); line-height: 1.35; margin-bottom: 6px;
+  }
+  .smart-card-desc {
+    font-size: 12.5px; line-height: 1.45; color: var(--itau-texto-secundario); margin-bottom: 12px;
+  }
+  .smart-destaque-box {
+    background: #f8fafc; border: 1px solid var(--itau-borda); border-radius: var(--radius-md);
+    padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+  }
+  .smart-destaque-box span { font-size: 11.5px; color: var(--itau-texto-secundario); }
+  .smart-destaque-box b { font-size: 14px; font-weight: 800; color: var(--itau-verde); }
+
+  .smart-botoes-row { display: flex; flex-direction: column; gap: 8px; }
+  .btn-acao-smart-primaria {
+    background: var(--itau-laranja); color: #fff; border: none; border-radius: var(--radius-md);
+    padding: 12px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+    display: flex; justify-content: center; align-items: center; gap: 6px;
+    transition: background 0.15s ease;
+  }
+  .btn-acao-smart-primaria:hover { background: var(--itau-laranja-hover); }
+  .btn-acao-smart-secundaria {
+    background: #f1f5f9; color: var(--itau-azul-medio); border: 1px solid #cbd5e1;
+    border-radius: var(--radius-md); padding: 9px 12px; font-size: 12px; font-weight: 600;
+    cursor: pointer; text-align: center;
+  }
+  .btn-acao-smart-secundaria:hover { background: #e2e8f0; }
+
+  /* Seção 3: Cartão de Crédito e Fatura */
+  .cartao-fatura-card {
+    background: var(--itau-card-bg); border-radius: var(--radius-lg); padding: 18px;
+    box-shadow: var(--sombra-card); border: 1px solid var(--itau-borda);
+  }
+  .fatura-top-info {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+  }
+  .fatura-top-info span { font-size: 12px; font-weight: 700; color: var(--itau-texto-secundario); text-transform: uppercase; }
+  .badge-dias-fatura {
+    font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
+    background: #fff4e5; color: #b25300;
+  }
+  .valor-fatura-row {
+    font-size: 24px; font-weight: 800; color: var(--itau-azul-header); margin-bottom: 8px;
+  }
+  .fatura-detalhe-linha {
+    display: flex; justify-content: space-between; font-size: 12px; color: var(--itau-texto-secundario);
+    padding-bottom: 10px; border-bottom: 1px solid var(--itau-borda); margin-bottom: 10px;
+  }
+
+  /* Seção 4: Lançamentos Recentes */
+  .extrato-card {
+    background: var(--itau-card-bg); border-radius: var(--radius-lg); padding: 16px;
+    box-shadow: var(--sombra-card); border: 1px solid var(--itau-borda);
+  }
+  .extrato-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    font-size: 12.5px; font-weight: 700; color: var(--itau-azul-header);
+  }
+  .extrato-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 12.5px;
+  }
+  .extrato-item:last-child { border-bottom: none; }
+  .extrato-desc { font-weight: 600; color: var(--itau-texto-primario); }
+  .extrato-sub { font-size: 11px; color: var(--itau-texto-secundario); }
+  .extrato-val { font-weight: 700; color: var(--itau-azul-header); }
+
+  /* Botão Flutuante da IA.Í */
+  .btn-flutuante-ia {
+    position: absolute; bottom: 80px; right: 20px; z-index: 40;
+    background: linear-gradient(135deg, var(--itau-laranja) 0%, #e65100 100%);
+    color: #fff; border: none; border-radius: 28px; padding: 12px 18px;
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;
+    box-shadow: 0 8px 24px rgba(236,112,0,0.35); cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-flutuante-ia:hover { transform: scale(1.03); }
+  .ia-dot-pulsing {
+    width: 8px; height: 8px; background: #fff; border-radius: 50%;
+    box-shadow: 0 0 8px #fff;
+  }
+
+  /* Bottom Navigation */
+  .itau-bottom-nav {
+    height: 64px; background: #fff; border-top: 1px solid var(--itau-borda);
+    display: flex; justify-content: space-around; align-items: center; z-index: 10;
+  }
+  .nav-item {
+    background: none; border: none; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600;
+    color: var(--itau-texto-secundario); cursor: pointer; flex: 1;
+  }
+  .nav-item.ativo { color: var(--itau-laranja); }
+  .nav-item span.icon { font-size: 19px; }
+
+  /* Modal do iToken (Autenticação 2-Phase Commit) */
+  .modal-overlay {
+    position: absolute; inset: 0; background: rgba(6, 20, 38, 0.75); z-index: 60;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+    backdrop-filter: blur(4px); animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal-itoken-card {
+    background: #fff; border-radius: 26px; padding: 24px 20px; width: 100%; max-width: 360px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center;
+  }
+  .itoken-circle-badge {
+    width: 58px; height: 58px; background: #fff5eb; border-radius: 50%;
+    margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; border: 2px solid var(--itau-laranja);
+  }
+  .itoken-titulo { font-size: 17px; font-weight: 800; color: var(--itau-azul-header); margin-bottom: 4px; }
+  .itoken-subtitulo { font-size: 12px; color: var(--itau-texto-secundario); margin-bottom: 16px; }
+  .itoken-code-box {
+    background: #f8fafc; border: 1.5px dashed var(--itau-laranja); border-radius: 12px;
+    padding: 10px; margin-bottom: 16px;
+  }
+  .itoken-codigo-num {
+    font-family: monospace; font-size: 22px; font-weight: 800; letter-spacing: 4px;
+    color: var(--itau-azul-header);
+  }
+  .itoken-detalhes-tabela {
+    font-size: 12px; text-align: left; margin-bottom: 18px; border-collapse: collapse; width: 100%;
+  }
+  .itoken-detalhes-tabela td { padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+  .itoken-detalhes-tabela td:last-child { text-align: right; font-weight: 700; color: var(--itau-azul-header); }
+  .itoken-botoes-row { display: flex; gap: 10px; }
+  .itoken-botoes-row button {
+    flex: 1; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .btn-itoken-cancelar { background: #f1f5f9; border: 1px solid #cbd5e1; color: var(--itau-texto-secundario); }
+  .btn-itoken-confirmar { background: var(--itau-verde); border: none; color: #fff; }
+
+  /* Modal de Comprovante Oficial */
+  .modal-recibo-card {
+    background: #fff; border-radius: 26px; padding: 22px 18px; width: 100%; max-width: 360px;
+    text-align: left;
+  }
+  .recibo-header {
+    border-bottom: 2px dashed var(--itau-borda); padding-bottom: 12px; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .recibo-header b { font-size: 15px; color: var(--itau-azul-header); }
+  .recibo-corpo { font-size: 12px; line-height: 1.5; color: var(--itau-texto-secundario); margin-bottom: 16px; }
+  .recibo-hash { font-family: monospace; font-size: 11px; background: #f1f5f9; padding: 6px; border-radius: 6px; word-break: break-all; margin-top: 8px; }
+
+  /* Drawer Lateral do Copiloto IA.Í */
+  .drawer-overlay {
+    position: absolute; inset: 0; background: rgba(6, 20, 38, 0.6); z-index: 50;
+    display: none; align-items: flex-end;
+  }
+  .drawer-chat {
+    width: 100%; height: 85%; background: #f8fafc; border-top-left-radius: 28px;
+    border-top-right-radius: 28px; display: flex; flex-direction: column;
+    overflow: hidden; animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .drawer-header {
+    background: #fff; padding: 14px 18px; border-bottom: 1px solid var(--itau-borda);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .drawer-titulo-box b { display: block; font-size: 14.5px; color: var(--itau-azul-header); }
+  .drawer-titulo-box span { font-size: 11.5px; color: var(--itau-texto-secundario); }
+  .btn-fechar-drawer {
+    background: #f1f5f9; border: none; border-radius: 50%; width: 30px; height: 30px;
+    cursor: pointer; font-size: 14px; font-weight: bold; color: var(--itau-texto-secundario);
+  }
+  .drawer-mensagens {
+    flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .chat-balao {
+    max-width: 88%; padding: 12px 14px; border-radius: 16px; font-size: 13px;
+    line-height: 1.48; box-shadow: 0 1px 3px rgba(0,0,0,0.04); word-wrap: break-word;
+  }
+  .chat-balao.cli {
+    background: #e7effb; color: var(--itau-azul-medio); margin-left: auto;
+    border-top-right-radius: 4px; border: 1px solid #c8dbf2;
+  }
+  .chat-balao.bot {
+    background: #ffffff; color: var(--itau-texto-primario);
+    border-top-left-radius: 4px; border: 1px solid var(--itau-borda);
+  }
+  .chat-chip-auditoria {
+    text-align: center; margin: 4px 0; font-size: 11px;
+  }
+  .chat-chip-auditoria span {
+    background: #e2e8f0; color: #334155; padding: 3px 10px; border-radius: 10px; font-weight: 500;
+  }
+  .drawer-sugestoes {
+    display: flex; gap: 6px; overflow-x: auto; padding: 6px 14px; scrollbar-width: none;
+    background: #fff; border-top: 1px solid var(--itau-borda);
+  }
+  .drawer-sugestoes::-webkit-scrollbar { display: none; }
+  .drawer-sugestoes button {
+    flex: 0 0 auto; border: 1px solid var(--itau-borda); background: #f8fafc;
+    border-radius: 14px; padding: 6px 12px; font-size: 11.5px; font-weight: 500;
+    color: var(--itau-azul-medio); cursor: pointer;
+  }
+  .drawer-input-form {
+    display: flex; gap: 8px; padding: 10px 14px 14px; background: #fff;
+  }
+  .drawer-input-form input {
+    flex: 1; border: 1.5px solid var(--itau-borda); border-radius: 20px;
+    padding: 10px 14px; font-size: 13px; outline: none;
+  }
+  .drawer-input-form button {
+    background: var(--itau-laranja); border: none; border-radius: 20px;
+    padding: 0 16px; color: #fff; font-weight: 700; cursor: pointer;
+  }
+
+  /* Seletor Corporativo de Contas */
+  .sheet-contas {
+    width: 100%; background: #fff; border-top-left-radius: 26px; border-top-right-radius: 26px;
+    padding: 20px 18px 26px; max-height: 80%; overflow-y: auto;
+  }
+  .conta-item-card {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px; border-radius: 14px; border: 1.5px solid var(--itau-borda);
+    margin-bottom: 10px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .conta-item-card:hover, .conta-item-card.ativa {
+    border-color: var(--itau-laranja); background: #fffaf5;
+  }
+  .conta-item-info b { font-size: 13.5px; color: var(--itau-azul-header); display: block; }
+  .conta-item-info span { font-size: 11px; color: var(--itau-texto-secundario); }
+  .conta-item-valores { text-align: right; }
+  .conta-item-valores b { font-size: 13.5px; color: var(--itau-azul-header); display: block; }
+  .conta-item-valores span { font-size: 11px; color: var(--itau-verde); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="device-frame" role="region" aria-label="Itaú SuperApp">
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span>09:41</span>
+    <div class="dynamic-island"></div>
+    <span>5G ▮ 100%</span>
+  </div>
+
+  <!-- Header do App -->
+  <header class="itau-app-bar">
+    <div class="header-brand-conta" id="btn-abrir-seletor-contas" title="Alternar conta bancária">
+      <div class="itau-mini-logo">itaú</div>
+      <div class="header-user-info">
+        <b><span id="txt-nome-titular">Diego Takahashi</span> <span class="badge-segmento" id="txt-segmento">Personnalité</span></b>
+        <span id="txt-ag-conta">Agência 0057 · C/C 84920-1</span>
+      </div>
+    </div>
+    <button class="btn-trocar-ambiente" id="btn-trocar-topo">
+      Contas ▾
+    </button>
+  </header>
+
+  <!-- Scroll Principal -->
+  <main class="app-scroll-body" id="app-body">
+
+    <!-- Card 1: Posição Patrimonial Consolidada -->
+    <section class="patrimonio-card">
+      <div class="patrimonio-header">
+        <span>Conta Corrente</span>
+        <span class="tag-status-conta" id="tag-status-conta">Ativa · Sem Bloqueios</span>
+      </div>
+      <div class="saldo-principal-row">
+        <div class="label-saldo">Saldo disponível em conta</div>
+        <div class="valor-saldo-corrente" id="txt-saldo-corrente">R$ 38.250,00</div>
+      </div>
+      <div class="sub-saldos-grid">
+        <div class="sub-saldo-box">
+          <span>Investimentos (CDB 100% CDI)</span>
+          <b id="txt-saldo-investido">R$ 0,00</b>
+        </div>
+        <div class="sub-saldo-box">
+          <span>Limite Cheque Especial (LIS)</span>
+          <b id="txt-limite-lis">R$ 10.000,00</b>
+        </div>
+      </div>
+    </section>
+
+    <!-- Card 2: SMART CARD PROATIVO DO GESTOR DE CAIXA -->
+    <section class="smart-card-gestor tema-laranja" id="smart-card-gestor">
+      <div class="smart-tag-row">
+        <span class="smart-badge-proativo" id="smart-card-badge">⚡ Oportunidade de Liquidez</span>
+        <span style="font-size:11px; color:var(--itau-texto-secundario); font-weight:600;">Zero-Friction</span>
+      </div>
+      <div class="smart-card-titulo" id="smart-card-titulo">
+        Você tem R$ 28.550,00 parados na conta rendendo 0%
+      </div>
+      <div class="smart-card-desc" id="smart-card-desc">
+        Identificamos que suas contas fixas e sua fatura de cartão estão protegidas pelo colchão de segurança de R$ 9.700,00. 
+        Sua liquidez ociosa pode render R$ 189,07 líquidos por mês no CDB Itaú Liquidez Diária.
+      </div>
+      <div class="smart-destaque-box" id="smart-card-destaque">
+        <span id="smart-destaque-rotulo">Rendimento Líquido Estimado</span>
+        <b id="smart-destaque-val">+R$ 189,07 / mês</b>
+      </div>
+      <div class="smart-botoes-row">
+        <button type="button" class="btn-acao-smart-primaria" id="btn-smart-acao-primaria">
+          ⚡ Aplicar com iToken (1 toque)
+        </button>
+        <button type="button" class="btn-acao-smart-secundaria" id="btn-smart-acao-secundaria">
+          💬 Entender cálculo com a IA.Í
+        </button>
+      </div>
+    </section>
+
+    <!-- Card 3: Cartão de Crédito e Fatura -->
+    <section class="cartao-fatura-card">
+      <div class="fatura-top-info">
+        <span>Cartão de Crédito</span>
+        <span class="badge-dias-fatura" id="txt-badge-fatura">Vence em 8 dias</span>
+      </div>
+      <div class="valor-fatura-row" id="txt-valor-fatura">R$ 4.250,00</div>
+      <div class="fatura-detalhe-linha">
+        <span>Status da fatura: <b id="txt-status-fatura" style="color:var(--itau-texto-primario);">Aberta</b></span>
+        <span>Melhor dia de compra: <b>Dia 21</b></span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn-acao-smart-secundaria" style="flex:1;" id="btn-pagar-fatura-home">
+          Pagar Fatura
+        </button>
+        <button type="button" class="btn-acao-smart-secundaria" style="flex:1;" id="btn-parcelar-fatura-home">
+          Parcelar sem Rotativo
+        </button>
+      </div>
+    </section>
+
+    <!-- Card 4: Extrato de Lançamentos Recentes -->
+    <section class="extrato-card">
+      <div class="extrato-header">
+        <span>Últimos Lançamentos</span>
+        <span style="font-weight:400; font-size:11px; color:var(--itau-texto-secundario);">Extrato Oficial</span>
+      </div>
+      <div id="lista-lancamentos-extrato">
+        <!-- Renderizado dinamicamente -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Botão Flutuante IA.Í Copiloto -->
+  <button class="btn-flutuante-ia" id="btn-abrir-ia-flutuante" aria-label="Abrir Copiloto IA.Í">
+    <div class="ia-dot-pulsing"></div>
+    <span>IA.Í Copilot</span>
+  </button>
+
+  <!-- Bottom Navigation -->
+  <nav class="itau-bottom-nav">
+    <button class="nav-item ativo" id="nav-home">
+      <span class="icon">🏠</span>
+      Início
+    </button>
+    <button class="nav-item" id="nav-extrato">
+      <span class="icon">📄</span>
+      Extrato
+    </button>
+    <button class="nav-item" id="nav-investimentos">
+      <span class="icon">📈</span>
+      Investir
+    </button>
+    <button class="nav-item" id="nav-ia">
+      <span class="icon">✨</span>
+      IA.Í
+    </button>
+  </nav>
+
+  <!-- MODAL DO ITOKEN (AUTENTICAÇÃO 2-PHASE COMMIT) -->
+  <div class="modal-overlay" id="modal-itoken-overlay">
+    <div class="modal-itoken-card">
+      <div class="itoken-circle-badge">🔒</div>
+      <div class="itoken-titulo">Autenticação iToken Itaú</div>
+      <div class="itoken-subtitulo" id="itoken-subtitulo-op">Confirme a operação com seu token de segurança</div>
+      
+      <div class="itoken-code-box">
+        <span style="font-size:10px; color:var(--itau-texto-secundario); display:block; margin-bottom:4px;">CÓDIGO DE SEGURANÇA TEMPORAL</span>
+        <div class="itoken-codigo-num" id="itoken-display-codigo">849 201</div>
+      </div>
+
+      <table class="itoken-detalhes-tabela" id="itoken-tabela-detalhes">
+        <!-- Detalhes contratuais preenchidos via JS -->
+      </table>
+
+      <div class="itoken-botoes-row">
+        <button class="btn-itoken-cancelar" id="btn-itoken-recusar" type="button">Cancelar</button>
+        <button class="btn-itoken-confirmar" id="btn-itoken-autorizar" type="button">Autorizar Operação</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE COMPROVANTE BANCÁRIO OFICIAL -->
+  <div class="modal-overlay" id="modal-comprovante-overlay">
+    <div class="modal-recibo-card">
+      <div class="recibo-header">
+        <b>Comprovante de Operação</b>
+        <span style="font-size:11px; font-weight:700; color:var(--itau-verde);">EFETIVADO</span>
+      </div>
+      <div class="recibo-corpo" id="recibo-corpo-conteudo">
+        <!-- Renderizado dinamicamente -->
+      </div>
+      <button class="btn-acao-smart-primaria" style="width:100%;" id="btn-fechar-comprovante" type="button">
+        Concluir
+      </button>
+    </div>
+  </div>
+
+  <!-- DRAWER DA IA.Í COPILOTO (ON-DEMAND) -->
+  <div class="drawer-overlay" id="drawer-ia-overlay">
+    <div class="drawer-chat">
+      <div class="drawer-header">
+        <div class="drawer-titulo-box">
+          <b>IA.Í — Copiloto Financeiro Itaú</b>
+          <span>Assistente Inteligente Autônomo</span>
+        </div>
+        <button class="btn-fechar-drawer" id="btn-fechar-drawer" type="button">✕</button>
+      </div>
+
+      <div class="drawer-mensagens" id="drawer-msgs"></div>
+      <div class="drawer-sugestoes" id="drawer-sugestoes"></div>
+
+      <form class="drawer-input-form" id="drawer-form" autocomplete="off">
+        <input id="drawer-input" placeholder="Pergunte sobre sua conta, CDB, juros..." aria-label="Mensagem">
+        <button type="submit" id="drawer-submit">Enviar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SELETOR CORPORATIVO DE CONTAS -->
+  <div class="drawer-overlay" id="sheet-contas-overlay">
+    <div class="sheet-contas">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <b style="font-size:15px; color:var(--itau-azul-header);">Alternar Conta (Ambiente Corporativo)</b>
+        <button class="btn-fechar-drawer" id="btn-fechar-sheet-contas" type="button">✕</button>
+      </div>
+      <div id="lista-contas-ambiente"></div>
+      <div style="font-size:11px; color:var(--itau-texto-secundario); text-align:center; margin-top:12px;">
+        Base real conectada com calibração BigQuery (<code>hackathon_dados.extrato_sintetico</code>).
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const APP = "copiloto_fatura", USUARIO = "cliente_itau";
+let contaAtiva = null, sessaoADK = null, ocupado = false, operacaoPendente = null;
+
+const $ = (id) => document.getElementById(id);
+
+function formatarBRL(v) {
+  const s = v < 0 ? "-" : "";
+  return s + "R$ " + Math.abs(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escapar(t) {
+  return String(t).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+}
+
+async function api(caminho, corpo) {
+  const r = await fetch(caminho, {
+    method: corpo ? "POST" : "GET",
+    headers: {"Content-Type": "application/json"},
+    body: corpo ? JSON.stringify(corpo) : undefined
+  });
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+// 1. CARREGAR DADOS CONSOLIDADOS DA CONTA
+async function carregarConta(clienteId) {
+  try {
+    const dados = await api(`/api/conta/${clienteId}`);
+    contaAtiva = dados;
+
+    // Atualiza Topo
+    $("txt-nome-titular").textContent = dados.nome;
+    $("txt-segmento").textContent = dados.segmento.replace("Itaú ", "");
+    $("txt-ag-conta").textContent = `Agência ${dados.agencia} · C/C ${dados.conta}`;
+
+    // Atualiza Patrimônio
+    $("txt-saldo-corrente").textContent = dados.saldo_formatado;
+    $("txt-saldo-investido").textContent = dados.total_investido_formatado;
+    $("txt-limite-lis").textContent = dados.limite_cheque_especial_formatado;
+
+    // Atualiza Fatura
+    $("txt-valor-fatura").textContent = dados.fatura_formatada;
+    $("txt-badge-fatura").textContent = `Vence em ${dados.fatura.dias_ate_vencimento} dias`;
+    $("txt-status-fatura").textContent = dados.fatura.status === "aberta" ? "Em Aberto" : dados.fatura.status;
+
+    // Atualiza Smart Card do Gestor de Caixa (Proatividade Pura)
+    renderizarSmartCard(dados.diagnostico.smart_card);
+
+    // Atualiza Extrato
+    renderizarExtrato(dados.extrato_recente);
+
+    // Inicializa Sessão no ADK para a IA.Í
+    await iniciarSessaoADK(dados.cliente_id, dados.primeiro_nome);
+
+  } catch (e) {
+    console.error("Erro ao carregar conta:", e);
+  }
+}
+
+// 2. RENDERIZAR SMART CARD PROATIVO
+function renderizarSmartCard(card) {
+  const el = $("smart-card-gestor");
+  el.className = `smart-card-gestor tema-${card.cor_tema || 'laranja'}`;
+
+  $("smart-card-badge").textContent = `${card.icone} ${card.tag}`;
+  $("smart-card-titulo").textContent = card.titulo;
+  $("smart-card-desc").textContent = card.descricao;
+
+  $("smart-destaque-rotulo").textContent = card.destaque_label;
+  $("smart-destaque-val").textContent = card.destaque_valor;
+
+  const btnPrimario = $("btn-smart-acao-primaria");
+  btnPrimario.textContent = card.acao_primaria_texto;
+  btnPrimario.onclick = () => dispararAcaoSmartCard(card.acao_primaria_payload);
+
+  const btnSecundario = $("btn-smart-acao-secundaria");
+  btnSecundario.textContent = card.acao_secundaria_texto;
+  btnSecundario.onclick = () => {
+    abrirDrawerIA();
+    falarNoDrawer(card.acao_secundaria_prompt);
+  };
+}
+
+// 3. RENDERIZAR EXTRATO
+function renderizarExtrato(itens) {
+  const c = $("lista-lancamentos-extrato");
+  c.innerHTML = "";
+  if (!itens || itens.length === 0) {
+    c.innerHTML = `<div style="font-size:12px; color:var(--itau-texto-secundario); padding:8px 0;">Nenhum lançamento recente.</div>`;
+    return;
+  }
+  for (const item of itens) {
+    const d = document.createElement("div");
+    d.className = "extrato-item";
+    d.innerHTML = `
+      <div>
+        <div class="extrato-desc">${escapar(item.categoria || item.descricao || 'Despesa')}</div>
+        <div class="extrato-sub">Há ${item.dias_atras || 1} dias · ${item.meio || 'débito'}</div>
+      </div>
+      <div class="extrato-val">${formatarBRL(item.valor)}</div>
+    `;
+    c.appendChild(d);
+  }
+}
+
+// 4. DISPARAR AÇÃO DO SMART CARD (ABRE ITOKEN)
+function dispararAcaoSmartCard(payload) {
+  if (!payload) return;
+  operacaoPendente = payload;
+
+  const tabela = $("itoken-tabela-detalhes");
+  tabela.innerHTML = "";
+
+  if (payload.tipo === "aplicar_cdb") {
+    $("itoken-subtitulo-op").textContent = "Aplicação em CDB Itaú Liquidez Diária (100% CDI)";
+    tabela.innerHTML = `
+      <tr><td>Produto</td><td>CDB Itaú Liquidez Diária</td></tr>
+      <tr><td>Rentabilidade</td><td>100% do CDI</td></tr>
+      <tr><td>Garantia</td><td>FGC até R$ 250.000,00</td></tr>
+      <tr><td>Valor a Debitar</td><td>${formatarBRL(payload.valor)}</td></tr>
+      <tr><td>Carência / Resgate</td><td>Imediata (Liquidez D+0)</td></tr>
+    `;
+  } else if (payload.tipo === "parcelar_fatura") {
+    $("itoken-subtitulo-op").textContent = "Parcelamento Protegido da Fatura sem Rotativo";
+    tabela.innerHTML = `
+      <tr><td>Contrato</td><td>Parcelamento Planejado</td></tr>
+      <tr><td>Plano</td><td>${payload.n_parcelas} parcelas mensais</td></tr>
+      <tr><td>Taxa Especial</td><td>1,99% a.m. (vs 14,9% rotativo)</td></tr>
+      <tr><td>Economia Projetada</td><td>R$ 375,10 em juros</td></tr>
+    `;
+  } else if (payload.tipo === "especialista") {
+    abrirDrawerIA();
+    falarNoDrawer("Gostaria de falar com um especialista em renegociação sobre o meu caso sob a Lei 14.181.");
+    return;
+  } else {
+    abrirDrawerIA();
+    falarNoDrawer("Gostaria de ver detalhes do meu extrato e fluxo futuro.");
+    return;
+  }
+
+  // Gera código temporal dinâmico
+  const codigo = String(Math.floor(100000 + Math.random() * 900000));
+  $("itoken-display-codigo").textContent = codigo.slice(0,3) + " " + codigo.slice(3);
+
+  $("modal-itoken-overlay").style.display = "flex";
+}
+
+// 5. EFETIVAR AÇÃO BANCÁRIA COM ITOKEN (2-PHASE COMMIT)
+$("btn-itoken-autorizar").onclick = async () => {
+  if (!operacaoPendente) return;
+  $("modal-itoken-overlay").style.display = "none";
+
+  try {
+    let resposta;
+    if (operacaoPendente.tipo === "aplicar_cdb") {
+      resposta = await api("/api/executar/investimento", {
+        cliente_id: contaAtiva.cliente_id,
+        valor: operacaoPendente.valor,
+        dias_permanencia: operacaoPendente.dias_permanencia || 30
+      });
+      exibirComprovante("Aplicação Financeira Realizada", `
+        <p><b>Produto:</b> CDB Itaú Liquidez Diária (100% CDI)</p>
+        <p><b>Valor Aplicado:</b> ${formatarBRL(resposta.recibo.valor_aplicado)}</p>
+        <p><b>Novo Saldo em Conta:</b> ${formatarBRL(resposta.saldo_novo)}</p>
+        <p><b>Saldo Total em CDB:</b> ${formatarBRL(resposta.saldo_investido_novo)}</p>
+        <p><b>ID do Comprovante:</b> ${resposta.recibo.comprovante_id}</p>
+        <div class="recibo-hash">Autenticação Digital SHA-256:<br>${resposta.autenticacao_digital}</div>
+      `);
+    } else if (operacaoPendente.tipo === "parcelar_fatura") {
+      resposta = await api("/api/executar/parcelamento", {
+        cliente_id: contaAtiva.cliente_id,
+        n_parcelas: operacaoPendente.n_parcelas
+      });
+      exibirComprovante("Parcelamento de Fatura Contratado", `
+        <p><b>Contrato:</b> ${resposta.recibo.contrato_id}</p>
+        <p><b>Condição:</b> ${resposta.recibo.n_parcelas}x de ${formatarBRL(resposta.recibo.parcela)}</p>
+        <p><b>Custo Total:</b> ${formatarBRL(resposta.recibo.custo_total)}</p>
+        <p><b>Status da Fatura:</b> Parcelada (Sem Rotativo)</p>
+        <div class="recibo-hash">Autenticação Digital SHA-256:<br>${resposta.autenticacao_digital}</div>
+      `);
+    }
+
+    // Recarrega conta para atualizar saldos instantaneamente
+    await carregarConta(contaAtiva.cliente_id);
+
+  } catch (err) {
+    alert("Falha na operação bancária: " + err.message);
+  } finally {
+    operacaoPendente = null;
+  }
+};
+
+$("btn-itoken-recusar").onclick = () => {
+  $("modal-itoken-overlay").style.display = "none";
+  operacaoPendente = null;
+};
+
+function exibirComprovante(titulo, htmlCorpo) {
+  $("recibo-corpo-conteudo").innerHTML = htmlCorpo;
+  $("modal-comprovante-overlay").style.display = "flex";
+}
+$("btn-fechar-comprovante").onclick = () => {
+  $("modal-comprovante-overlay").style.display = "none";
+};
+
+// 6. DRAWER DA IA.Í (COPILOTO CONVERSACIONAL ON-DEMAND)
+function abrirDrawerIA() {
+  $("drawer-ia-overlay").style.display = "flex";
+  $("drawer-input").focus();
+}
+$("btn-abrir-ia-flutuante").onclick = abrirDrawerIA;
+$("nav-ia").onclick = abrirDrawerIA;
+$("btn-fechar-drawer").onclick = () => { $("drawer-ia-overlay").style.display = "none"; };
+$("drawer-ia-overlay").onclick = (e) => {
+  if (e.target === $("drawer-ia-overlay")) $("drawer-ia-overlay").style.display = "none";
+};
+
+async function iniciarSessaoADK(cid, primNome) {
+  try {
+    const s = await api(`/apps/${APP}/users/${USUARIO}/sessions`, {
+      state: { cliente_id: cid, primeiro_nome: primNome }
+    });
+    sessaoADK = s.id;
+    $("drawer-msgs").innerHTML = "";
+    adicionarBolha(`Olá, ${escapar(primNome)}! Sou a IA.Í, sua especialista autônoma em gestão de caixa e finanças Itaú. Como posso te apoiar hoje?`, "bot");
+    atualizarSugestoesDrawer();
+  } catch (e) {
+    console.error("Erro ao iniciar sessão ADK:", e);
+  }
+}
+
+function adicionarBolha(html, classe) {
+  const d = document.createElement("div");
+  d.className = "chat-balao " + classe;
+  d.innerHTML = html;
+  $("drawer-msgs").appendChild(d);
+  $("drawer-msgs").scrollTop = $("drawer-msgs").scrollHeight;
+}
+
+function adicionarChip(texto) {
+  const d = document.createElement("div");
+  d.className = "chat-chip-auditoria";
+  d.innerHTML = `<span>${escapar(texto)}</span>`;
+  $("drawer-msgs").appendChild(d);
+}
+
+function atualizarSugestoesDrawer() {
+  const container = $("drawer-sugestoes");
+  container.innerHTML = "";
+  const sugestoes = [
+    "Como funciona o colchão de segurança?",
+    "Quanto rende R$ 20 mil no CDB 100% CDI?",
+    "Quais despesas fixas vencem até dia 08?",
+    "Como evitar os juros do rotativo?",
+    "Simular resgate em 15 dias com IOF"
+  ];
+  for (const s of sugestoes) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = s;
+    b.onclick = () => falarNoDrawer(s);
+    container.appendChild(b);
+  }
+}
+
+async function falarNoDrawer(texto) {
+  if (!texto.trim() || ocupado || !sessaoADK) return;
+  ocupado = true;
+  $("drawer-input").value = "";
+  adicionarBolha(escapar(texto), "cli");
+  $("drawer-submit").disabled = true;
+
+  try {
+    const eventos = await api("/run", {
+      appName: APP,
+      userId: USUARIO,
+      sessionId: sessaoADK,
+      newMessage: { role: "user", parts: [{ text: texto }] }
+    });
+
+    for (const ev of eventos) {
+      if (ev.author === "user") continue;
+      for (const p of (ev.content && ev.content.parts) || []) {
+        if (p.functionCall) {
+          adicionarChip(`⚡ Executou: ${p.functionCall.name}`);
+        } else if (p.text && !p.thought) {
+          adicionarBolha(p.text.replace(/\n/g, "<br>"), "bot");
+        }
+      }
+    }
+  } catch (e) {
+    adicionarBolha("Tive uma instabilidade momentânea ao processar sua dúvida. Por favor, tente novamente.", "bot");
+  } finally {
+    ocupado = false;
+    $("drawer-submit").disabled = false;
+  }
+}
+
+$("drawer-form").onsubmit = (e) => {
+  e.preventDefault();
+  falarNoDrawer($("drawer-input").value);
+};
+
+// 7. SELETOR CORPORATIVO DE CONTAS
+async function abrirSeletorContas() {
+  const dados = await api("/api/contas");
+  const container = $("lista-contas-ambiente");
+  container.innerHTML = "";
+
+  for (const c of dados.contas) {
+    const d = document.createElement("div");
+    d.className = `conta-item-card ${c.cliente_id === contaAtiva?.cliente_id ? 'ativa' : ''}`;
+    d.innerHTML = `
+      <div class="conta-item-info">
+        <b>${escapar(c.nome)} (${c.cliente_id})</b>
+        <span>${escapar(c.segmento)} · Ag ${c.agencia} C/C ${c.conta}</span>
+      </div>
+      <div class="conta-item-valores">
+        <b>Saldo: ${c.saldo_formatado}</b>
+        <span>${c.smart_card_tag}</span>
+      </div>
+    `;
+    d.onclick = () => {
+      $("sheet-contas-overlay").style.display = "none";
+      carregarConta(c.cliente_id);
+    };
+    container.appendChild(d);
+  }
+  $("sheet-contas-overlay").style.display = "flex";
+}
+
+$("btn-abrir-seletor-contas").onclick = abrirSeletorContas;
+$("btn-trocar-topo").onclick = abrirSeletorContas;
+$("btn-fechar-sheet-contas").onclick = () => { $("sheet-contas-overlay").style.display = "none"; };
+$("sheet-contas-overlay").onclick = (e) => {
+  if (e.target === $("sheet-contas-overlay")) $("sheet-contas-overlay").style.display = "none";
+};
+
+// Ações de Fatura Rápidas
+$("btn-pagar-fatura-home").onclick = () => {
+  abrirDrawerIA();
+  falarNoDrawer("Quero pagar o valor total da minha fatura de cartão de crédito.");
+};
+$("btn-parcelar-fatura-home").onclick = () => {
+  dispararAcaoSmartCard({ tipo: "parcelar_fatura", n_parcelas: 3 });
+};
+
+// Inicialização: carrega Diego Takahashi (C004 - Personnalité com R$ 38k)
+carregarConta("C004").catch(console.error);
+</script>
+</body>
+</html>

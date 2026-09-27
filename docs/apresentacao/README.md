@@ -52,5 +52,16 @@ node scripts/capturar_prints.js
 ```
 
 O script controla o Chrome em modo headless pelo protocolo DevTools (sem instalar nada além do Node),
-percorre os passos acima e grava os PNG em `prints-demo/`. O vídeo de reserva fica fora do Git
-(pesado): guarde no Google Drive ou num pendrive.
+percorre os passos acima e grava os PNG em `prints-demo/`.
+
+## Gerar o vídeo de apresentação com narração
+
+Para gerar o vídeo oficial de 5 minutos com narração sincronizada em português brasileiro, legendas e os prints das telas em Full HD (1920x1080), rode:
+
+```bash
+uv run --with pillow,gTTS python scripts/gerar_video_apresentacao.py
+```
+
+O script sintetiza a fala a partir do roteiro (`docs/ROTEIRO_DEMO_PITCH.md`), compõe os cards de abertura, demonstrações com as personas (Diego, Elaine, Carla e Ana), proteções de IA responsável e encerramento.
+O arquivo final gerado é `docs/apresentacao/apresentacao_aplicai.mp4` (duração 5m 19s, tamanho ~7,4 MB).
+

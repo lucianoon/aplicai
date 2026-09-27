@@ -1,4 +1,4 @@
-# Desenho de solução — Copiloto da Fatura
+# Desenho de solução — Aplicaí
 
 > Entregável 4. Peso: Arquitetura, Engenharia e Ciência de Dados (50%). Inclua o diagrama (docs/arquitetura.md ou LeanIX/Gliffy) e responda item a item.
 

@@ -136,7 +136,7 @@ def _texto_opcoes(nome: str, r: dict, oferecer_adaptacao: bool) -> str:
 
 def _raiz(c: _Conversa) -> LlmResponse:
     if not c.cid:
-        return _texto("Oi! Eu sou o Copiloto da Fatura. Para começar, me diga seu código de cliente (por exemplo, C001).")
+        return _texto("Oi! Eu sou o Aplicaí. Para começar, me diga seu código de cliente (por exemplo, C001).")
     if "iniciar_atendimento" not in c.chamadas:
         return _chamada("iniciar_atendimento", cliente_id=c.cid)
     nome, rs = c.nome(), c.respostas

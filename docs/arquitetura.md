@@ -1,4 +1,4 @@
-# Arquitetura — Copiloto da Fatura
+# Arquitetura — Aplicaí
 
 ```mermaid
 flowchart LR
@@ -10,7 +10,7 @@ flowchart LR
     F --> C{{Canal<br/>app · WhatsApp · voz}}
     C --> O
 
-    subgraph Agente["Copiloto da Fatura (ADK 2.x · Agent Runtime)"]
+    subgraph Agente["Aplicaí (ADK 2.x · Agent Runtime)"]
         O[Orquestrador<br/>Gemini 3.8 Flash]
         O -->|FunctionTool| A[analisar_fatura<br/>diagnóstico + simulador determinístico<br/>reais · parcelas · CET]
         O -->|transfer| X[Agente de ação<br/>aprovação nativa do ADK]

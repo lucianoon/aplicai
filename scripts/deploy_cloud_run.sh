@@ -14,7 +14,7 @@ if [ -z "$PROJETO" ]; then
 fi
 
 echo "=========================================================="
-echo "Iniciando Deploy do Copiloto da Fatura no Google Cloud Run"
+echo "Iniciando Deploy do Aplicaí no Google Cloud Run"
 echo "Projeto : $PROJETO"
 echo "Região  : $REGIAO"
 echo "Serviço : $SERVICO"

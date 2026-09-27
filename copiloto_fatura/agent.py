@@ -1,4 +1,4 @@
-"""Copiloto da Fatura: sistema multiagente em ADK.
+"""Aplicaí: sistema multiagente em ADK.
 
 Topologia (separação de responsabilidades, item da rubrica de arquitetura):
 

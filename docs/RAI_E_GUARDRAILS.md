@@ -1,7 +1,7 @@
 # Governança de IA Responsável (RAI) & Arquitetura de Guardrails
 
 > **Política Institucional de Conformidade e Segurança Algorítmica**  
-> **Sistema:** Itaú Gestor de Liquidez & Investimentos com IA  
+> **Sistema:** Aplicaí  
 > **Regulamentações Aplicadas:** LGPD (Lei 13.709/18), CVM 30, CMN 4.949, BCB 4.549, Lei 14.181 (Superendividamento)  
 > **Padrão de Segurança:** Defesa em Profundidade (*Defense in Depth*) com 4 Camadas de Guardrails
 
@@ -96,7 +96,7 @@ if projecao.saldo_livre_efetivo < 1000.0:
 
 #### 2. Governança de Consentimento LGPD (Art. 7º e 8º)
 - A rotina de disparos proativos (`proativo/gatilho.py`) consulta o arquivo de consentimentos persistidos.
-- Se o cliente solicitar a qualquer momento *"Não quero mais receber notificações da IA.Í"*, a tool `registrar_consentimento(cliente_id, "avisos_proativos", aceito=False)` grava a recusa de forma definitiva. A exclusão de preferências jamais apaga o registro da oposição, garantindo evidência comprobatória perante a ANPD.
+- Se o cliente solicitar a qualquer momento *"Não quero mais receber notificações do Aplicaí"*, a tool `registrar_consentimento(cliente_id, "avisos_proativos", aceito=False)` grava a recusa de forma definitiva. A exclusão de preferências jamais apaga o registro da oposição, garantindo evidência comprobatória perante a ANPD.
 
 ---
 
@@ -131,7 +131,7 @@ Localização no código: [`copiloto_fatura/autorizacao.py`](file:///home/lucian
 Localização no código: [`copiloto_fatura/prompts.py`](file:///home/luciano_oliver_nunes/itau-gestor-liquidez-ia/copiloto_fatura/prompts.py)
 
 #### 1. Proibição de Garantia de Rentabilidade
-- Conforme normas da CVM, a IA.Í é expressamente proibida de usar termos como *"retorno garantido de X%"* ou *"lucro certo"*. Toda projeção é qualificada como *"rendimento líquido estimado a 100% do CDI, sujeito a variações da taxa Selic e tributação regressiva"*.
+- Conforme normas da CVM, o Aplicaí é expressamente proibida de usar termos como *"retorno garantido de X%"* ou *"lucro certo"*. Toda projeção é qualificada como *"rendimento líquido estimado a 100% do CDI, sujeito a variações da taxa Selic e tributação regressiva"*.
 
 #### 2. Protocolo Ético do Superendividamento (Lei 14.181/2021)
 - Clientes com comprometimento crítico de renda (ex: Carla - C003) não recebem ofertas de crédito tradicional nem refinanciamentos com taxas compostas.

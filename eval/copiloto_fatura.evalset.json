@@ -1,6 +1,6 @@
 {
   "eval_set_id": "copiloto_fatura_v1",
-  "name": "Copiloto da Fatura - casos de aceitação e adversariais",
+  "name": "Aplicaí - casos de aceitação e adversariais",
   "description": "Caminho feliz, LGPD, injeção, sofrimento financeiro, PII no texto, promessa de crédito, dado sensível na memória e falso positivo de injeção., equidade por idade, inferência de saúde e direitos do titular. Números conferidos com analisar_fatura (seed 42).",
   "eval_cases": [
     {

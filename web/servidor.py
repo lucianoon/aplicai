@@ -1,4 +1,4 @@
-"""Servidor do SuperApp Itaú e APIs de Produção (com Copiloto IA.Í / ADK).
+"""Servidor do SuperApp Itaú e APIs de Produção (com Aplicaí / ADK).
 
 Endpoints:
 - /                             : Tela principal do Itaú SuperApp (Mobile)
@@ -165,7 +165,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                 "valor": proj.saldo_livre_efetivo,
                 "dias_permanencia": 30,
             },
-            "acao_secundaria_texto": "Explicar Investimento Agêntico com a IA.Í",
+            "acao_secundaria_texto": "Explicar Investimento Agêntico com o Aplicaí",
             "acao_secundaria_prompt": (
                 f"Como o agente de investimento calculou a reserva blindada de {formatar_moeda(proj.colchao_minimo_obrigatorio)} "
                 f"e por que recomendou aplicar {formatar_moeda(proj.saldo_livre_efetivo)} no CDB de liquidez diária?"
@@ -185,9 +185,9 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                 f"Você tem {formatar_moeda(proj.saldo_livre_efetivo)} além do necessário para as contas do mês. "
                 "Antes de sugerir qualquer investimento, precisamos do seu perfil de investidor em dia."
             ),
-            "acao_primaria_texto": "Entender com a IA.Í",
+            "acao_primaria_texto": "Entender com o Aplicaí",
             "acao_primaria_payload": {"tipo": "perfil"},
-            "acao_secundaria_texto": "Consultar IA.Í",
+            "acao_secundaria_texto": "Consultar Aplicaí",
             "acao_secundaria_prompt": "Por que preciso atualizar meu perfil de investidor antes de investir?",
             "destaque_valor": formatar_moeda(proj.saldo_livre_efetivo),
             "destaque_label": "Disponível após as contas do mês",
@@ -206,7 +206,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                 ),
                 "acao_primaria_texto": "Falar com Especialista de Renegociação",
                 "acao_primaria_payload": {"tipo": "especialista"},
-                "acao_secundaria_texto": "Entender direitos no Copiloto IA.Í",
+                "acao_secundaria_texto": "Entender direitos no Aplicaí",
                 "acao_secundaria_prompt": "Quais são meus direitos sob a Lei do Superendividamento (Lei 14.181) e como o Itaú pode me ajudar?",
                 "destaque_valor": "Suspensão de Encargos",
                 "destaque_label": "Cuidado e Proteção Ética",
@@ -228,7 +228,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                     "tipo": "parcelar_fatura",
                     "n_parcelas": 3,
                 },
-                "acao_secundaria_texto": "Simular outras parcelas com a IA.Í",
+                "acao_secundaria_texto": "Simular outras parcelas com o Aplicaí",
                 "acao_secundaria_prompt": "Quais são as opções de parcelamento da minha fatura e quanto economizo em relação ao rotativo?",
                 "destaque_valor": "Economia de R$ 375,10",
                 "destaque_label": "Juros Evitados vs Rotativo",
@@ -247,7 +247,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                 ),
                 "acao_primaria_texto": "Ver Extrato Detalhado",
                 "acao_primaria_payload": {"tipo": "extrato"},
-                "acao_secundaria_texto": "Consultar IA.Í",
+                "acao_secundaria_texto": "Consultar Aplicaí",
                 "acao_secundaria_prompt": "Quanto meus investimentos estão rendendo hoje e quando posso resgatar se precisar?",
                 "destaque_valor": "100% CDI",
                 "destaque_label": "Rentabilidade D+0",
@@ -262,7 +262,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                 "descricao": "Nenhum risco de rotativo identificado e fluxo futuro coberto pelos recebimentos previstos.",
                 "acao_primaria_texto": "Ver Extrato Detalhado",
                 "acao_primaria_payload": {"tipo": "extrato"},
-                "acao_secundaria_texto": "Consultar IA.Í",
+                "acao_secundaria_texto": "Consultar Aplicaí",
                 "acao_secundaria_prompt": "Como posso otimizar meus gastos e planejar minha reserva financeira?",
                 "destaque_valor": "100%",
                 "destaque_label": "Controle Financeiro",

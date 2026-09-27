@@ -96,3 +96,25 @@ Quatro saídas da mesma projeção:
 4. **Ana.** Fatura de R$ 1.850 e R$ 610 na conta: no chat, o simulador recomenda pagar R$ 549 agora e parcelar o resto em 6x de R$ 294,04. Cada passo tem a própria aprovação.
 
 A rotina `proativo/gatilho.py` varre a base sem modelo e avisa quem não cobre a fatura na janela de dias. Quem tem sobra, como o Diego, vê o card ao abrir o app; não entra nessa fila.
+
+## 5. Próximos passos
+
+O protótipo já projeta 30 dias, aplica a sobra com aprovação, recusa quem não pode investir e resolve a fatura no chat. A sequência abaixo continua nesse núcleo.
+
+**No POC**
+
+1. O card de quem não fecha o mês passa a usar a mesma cotação do simulador da fatura, com as mesmas taxas e a mesma economia em reais do chat.
+2. A primeira instrução do agente segue a ordem do produto: sobra e reserva primeiro; fatura quando o mês não fecha.
+3. O servidor MCP passa a publicar aplicar e resgatar o CDB, com a mesma autorização assinada das operações da fatura.
+4. A varredura em lote, sem modelo, também avisa quem tem sobra elegível. Hoje ela só lista quem não cobre a fatura; a oposição e o "responda PARAR" continuam valendo.
+5. A avaliação com o Gemini ganha os casos de investimento: aplicar a sobra, recusar valor acima da reserva, recusar sem perfil e recusar com saldo negativo, sem execução sem aprovação. O modo `demo` passa a cobrir esses casos sem internet.
+
+**No piloto, fora deste protótipo**
+
+- Titular da sessão vindo do token do canal, no lugar de `iniciar_atendimento`.
+- O mesmo contrato do banco simulado ligado ao core, à fatura e ao CDB.
+- Sessão e memória no Agent Engine; auditoria fora do JSONL do container; Model Armor no gateway.
+- Base do evento no lugar do JSON local, com o BigQuery ligado.
+- Piloto com grupo de controle: zero cliente que aplicou e ficou sem saldo para uma conta em 30 dias, adesão ao card e queda de quem cai no rotativo. As projeções para 100 mil clientes continuam hipótese.
+
+O resgate antes do maior débito do mês continua sugerido. Agendar esse resgate não faz parte desta sequência.

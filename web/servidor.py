@@ -17,6 +17,7 @@ import os
 import secrets
 import sys
 import time
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -119,7 +120,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
     raw = STORE._cliente(cid)
     saldo_atual = float(raw["saldo_conta"])
     renda_mensal = float(raw["renda_mensal"])
-    proj = MotorProjecaoCaixa.projetar(cid, saldo_atual, renda_mensal, raw)
+    proj = MotorProjecaoCaixa.projetar(cid, saldo_atual, renda_mensal, raw, date.fromisoformat(STORE.hoje()))
     aut_inv, mot_inv = PortaoRisco.avaliar_elegibilidade_investimento(proj)
     alivio_passivo = PortaoRisco.avaliar_necessidade_alivio_passivo(proj)
 
@@ -324,14 +325,12 @@ class RequisicaoInvestimento(BaseModel):
 @app.post("/api/executar/investimento")
 def executar_investimento(req: RequisicaoInvestimento) -> dict[str, Any]:
     """Aplica no CDB com 2-Phase Commit e capability HMAC assinada (Zero-LLM execution)."""
-    raw = STORE._cliente(req.cliente_id)
-    proj = MotorProjecaoCaixa.projetar(req.cliente_id, raw["saldo_conta"], raw["renda_mensal"], raw)
-    aut, mot = PortaoRisco.avaliar_elegibilidade_investimento(proj)
-    if not aut:
-        raise HTTPException(status_code=400, detail=mot)
-
     args = {"valor": req.valor, "dias_permanencia": req.dias_permanencia}
-    cotacao = cotar(STORE, "aplicar_cdb", req.cliente_id, args)
+    try:
+        # a cotação aplica o portão de risco e o limite do colchão
+        cotacao = cotar(STORE, "aplicar_cdb", req.cliente_id, args)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from None
     nonce = secrets.token_hex(16)
     token = assinar(cotacao, nonce)
     recibo = STORE.executar_autorizada("aplicar_cdb", req.cliente_id, args, token, canal="app_superapp_itoken")
@@ -415,7 +414,7 @@ def personas() -> dict:
             "abertura": alvo["mensagem_abertura"] if alvo else None,
             "dias": fatura["dias_ate_vencimento"],
         })
-    return {"modelo": os.getenv("COPILOTO_MODEL", "gemini-3.5-flash-lite"), "personas": lista}
+    return {"modelo": os.getenv("COPILOTO_MODEL", "gemini-3.8-flash"), "personas": lista}
 
 
 @app.post("/demo/reiniciar")

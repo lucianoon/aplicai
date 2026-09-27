@@ -6,7 +6,7 @@ from gestor_caixa.esquemas import ProjecaoCaixa30d, RegimeCliente
 
 
 class PortaoRisco:
-    """Implementa as travas de suitability e regulação bancária (CVM 30 / CMN 4.949)."""
+    """Travas de política interna de suitability (inspiradas na CVM 30 e na Lei 14.181)."""
 
     @staticmethod
     def avaliar_elegibilidade_investimento(projecao: ProjecaoCaixa30d) -> tuple[bool, str]:
@@ -16,7 +16,7 @@ class PortaoRisco:
         """
         # Trava 1: Saldo devedor imediato (Cheque Especial)
         if projecao.saldo_atual < 0:
-            return False, "BLOQUEIO_CVM: Cliente com saldo devedor em conta corrente."
+            return False, "BLOQUEIO_SALDO_DEVEDOR: Cliente com saldo devedor em conta corrente."
 
         # Trava 2: Superendividamento ou uso recente de rotativo
         if projecao.regime == RegimeCliente.DEFICIT_CRITICO:
@@ -29,8 +29,8 @@ class PortaoRisco:
                 f"contratuais (próximo grande débito: {projecao.data_proximo_grande_debito})."
             )
 
-        # Trava 4: Capital ocioso mínimo não atingido
-        if projecao.saldo_livre_efetivo < 1000.0:
+        # Trava 4: Capital ocioso mínimo não atingido (mesmo critério do regime de oportunidade)
+        if projecao.regime != RegimeCliente.OPORTUNIDADE_LIQUIDEZ:
             return False, (
                 "BLOQUEIO_COLCHAO: Saldo atual é necessário para honrar o colchão de segurança "
                 "de despesas essenciais do mês."

@@ -83,8 +83,8 @@ CHAVE_CAPACIDADE = "capacidade:"  # lida por tools/acao.py
 CHAVE_INVOCACAO_AUDITADA = "guardrail_ultima_invocacao"
 
 MSG_INJECAO = (
-    "Não posso atender a esse pedido. Eu ajudo com a sua fatura do cartão: "
-    "posso mostrar quanto custa cada forma de pagar e executar a opção que você escolher."
+    "Não posso atender a esse pedido. Eu ajudo com a sua fatura do cartão e com o dinheiro parado na conta: "
+    "posso mostrar quanto custa ou rende cada opção e executar a que você escolher."
 )
 
 

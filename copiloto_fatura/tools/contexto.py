@@ -384,7 +384,7 @@ def analisar_caixa_e_liquidez(tool_context: ToolContext = None) -> dict:
 
     Identifica compromissos contratuais (financiamento habitacional, mensalidade escolar, condomínio, fatura)
     e calcula o capital ocioso disponível para aplicação em CDB Liquidez Diária, aplicando as travas
-    regulatórias de suitability e risco (CVM 30 / CMN 4.949).
+    de suitability e risco (política interna inspirada na CVM 30 e na Lei 14.181).
     """
     if not tool_context or "cliente_id" not in tool_context.state:
         return {"status": "erro", "motivo": "cliente_id não identificado na sessão"}
@@ -398,7 +398,7 @@ def analisar_caixa_e_liquidez(tool_context: ToolContext = None) -> dict:
     from gestor_caixa.portao_risco import PortaoRisco
     from gestor_caixa.simulador_liquidez import SimuladorLiquidez
 
-    proj = MotorProjecaoCaixa.projetar(cid, saldo_atual, renda, cliente_raw)
+    proj = MotorProjecaoCaixa.projetar(cid, saldo_atual, renda, cliente_raw, date.fromisoformat(STORE.hoje()))
     elegivel, motivo_regulatorio = PortaoRisco.avaliar_elegibilidade_investimento(proj)
 
     resultado = {
@@ -445,7 +445,7 @@ def simular_investimento(valor: float, dias_permanencia: int = 30, tool_context:
     from gestor_caixa.portao_risco import PortaoRisco
     from gestor_caixa.simulador_liquidez import SimuladorLiquidez
 
-    proj = MotorProjecaoCaixa.projetar(cid, fluxo["saldo_atual"], renda, cliente_raw)
+    proj = MotorProjecaoCaixa.projetar(cid, fluxo["saldo_atual"], renda, cliente_raw, date.fromisoformat(STORE.hoje()))
     elegivel, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
     if not elegivel:
         return {

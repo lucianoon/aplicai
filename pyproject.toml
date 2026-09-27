@@ -1,7 +1,7 @@
 [project]
-name = "copiloto-fatura"
+name = "itau-gestor-liquidez-ia"
 version = "0.1.0"
-description = "Boilerplate ADK para a Batalha de Agentes Itau (jornada: fatura do cartao)"
+description = "Gestor de Liquidez e Fatura com IA (Batalha de Agentes Itau): ADK, guardrails e nucleo deterministico"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "google-adk>=2.9,<3",

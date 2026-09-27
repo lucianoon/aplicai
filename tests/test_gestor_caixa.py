@@ -1,5 +1,7 @@
 """Testes unitários determinísticos do Gestor de Caixa e Liquidez (sem LLM)."""
 
+from datetime import date
+
 import pytest
 from google.adk.tools.tool_context import ToolContext
 
@@ -48,7 +50,7 @@ def test_portao_risco_bloqueia_saldo_negativo():
     )
     autorizado, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
     assert not autorizado
-    assert "BLOQUEIO_CVM" in motivo
+    assert "BLOQUEIO_SALDO_DEVEDOR" in motivo
     assert PortaoRisco.avaliar_necessidade_alivio_passivo(proj)
 
 
@@ -89,7 +91,7 @@ def test_motor_projecao_extrai_compromissos_reais():
         ],
         "fatura": {"status": "aberta", "valor_total": 2000.0, "pago": 0.0, "dias_ate_vencimento": 15},
     }
-    proj = MotorProjecaoCaixa.projetar("C_TEST", 30000.0, 12000.0, cliente_raw, dia_do_mes_atual=5)
+    proj = MotorProjecaoCaixa.projetar("C_TEST", 30000.0, 12000.0, cliente_raw, hoje=date(2026, 9, 21))
     assert len(proj.compromissos_identificados) == 3
     assert proj.total_compromissos_fixos == 5895.0
     assert proj.saldo_livre_efetivo > 20000.0
@@ -143,3 +145,78 @@ def test_tools_contexto_analisar_caixa_e_liquidez():
     assert "saldo_atual" in diag
     assert "colchao_minimo_obrigatorio" in diag
     assert "regime" in diag
+
+
+def test_aplicar_cdb_bloqueado_pelo_portao_no_caminho_de_execucao():
+    # cliente com saldo, mas em déficit crítico: nem cotação nem execução passam
+    cliente_id = "C001"
+    c = STORE._cliente(cliente_id)
+    c["saldo_conta"] = 15000.0
+    c["negativado"] = True
+
+    args = {"valor": 1000.0, "dias_permanencia": 30}
+    with pytest.raises(ValueError, match="BLOQUEIO_SUITABILITY"):
+        cotar(STORE, "aplicar_cdb", cliente_id, args)
+
+    # capacidade forjada com a cotação de antes: o core recalcula e recusa
+    token = assinar({"acao": "aplicar_cdb", "cliente_id": cliente_id, **args}, "nonce-forjado")
+    with pytest.raises(ValueError):
+        STORE.executar_autorizada("aplicar_cdb", cliente_id, args, token)
+    assert c["saldo_conta"] == 15000.0
+
+
+def test_aplicar_cdb_nao_invade_o_colchao():
+    cliente_id = "C004"
+    saldo = STORE.get_fluxo_previsto(cliente_id)["saldo_atual"]
+    renda = STORE.get_perfil(cliente_id)["renda_mensal"]
+    proj = MotorProjecaoCaixa.projetar(cliente_id, saldo, renda, STORE._cliente(cliente_id))
+    assert proj.colchao_minimo_obrigatorio > 0
+
+    with pytest.raises(ValueError, match="capital livre"):
+        cotar(STORE, "aplicar_cdb", cliente_id, {"valor": saldo})
+
+    # o capital livre inteiro pode ser aplicado
+    q = cotar(STORE, "aplicar_cdb", cliente_id, {"valor": proj.saldo_livre_efetivo})
+    assert q["valor"] == proj.saldo_livre_efetivo
+
+
+def test_motor_usa_prazos_dos_dados_e_janela_de_30_dias():
+    cliente_raw = {
+        "saidas_previstas": [
+            {"descricao": "aluguel", "valor": 950.0, "dia_offset": 10},
+            {"descricao": "seguro anual", "valor": 4000.0, "dia_offset": 45},  # fora da janela
+        ],
+        "fatura": {"status": "aberta", "valor_total": 1850.0, "pago": 350.0, "dias_ate_vencimento": 5},
+    }
+    proj = MotorProjecaoCaixa.projetar("C_TEST", 10000.0, 4000.0, cliente_raw, hoje=date(2026, 9, 28))
+    por_tipo = {c.tipo: c for c in proj.compromissos_identificados}
+    assert set(por_tipo) == {TipoCompromisso.ALUGUEL, TipoCompromisso.FATURA_CARTAO}
+    assert por_tipo[TipoCompromisso.ALUGUEL].dias_ate_vencimento == 10
+    assert por_tipo[TipoCompromisso.ALUGUEL].dia_vencimento == 8  # 28/09 + 10 dias = 08/10
+    assert por_tipo[TipoCompromisso.FATURA_CARTAO].valor_estimado == 1500.0
+    assert proj.total_compromissos_fixos == 2450.0
+    assert proj.colchao_minimo_obrigatorio == 2450.0 + 600.0
+
+
+def test_motor_debito_de_referencia_e_o_maior_da_janela():
+    cliente_raw = {
+        "saidas_previstas": [
+            {"descricao": "energia", "valor": 180.0, "dia_offset": 1},
+            {"descricao": "financiamento", "valor": 2845.0, "dia_offset": 8},
+            {"descricao": "condominio", "valor": 900.0, "dia_offset": 3},
+        ],
+    }
+    proj = MotorProjecaoCaixa.projetar("C_TEST", 20000.0, 9000.0, cliente_raw, hoje=date(2026, 9, 21))
+    assert proj.valor_proximo_grande_debito == 2845.0
+    assert proj.dias_ate_proximo_debito == 8
+    assert proj.data_proximo_grande_debito.startswith("financiamento")
+
+
+def test_regime_neutro_nao_e_elegivel():
+    # capital livre positivo, mas abaixo do mínimo de oportunidade: regime e portão concordam
+    cliente_raw = {"saidas_previstas": [{"descricao": "aluguel", "valor": 1000.0, "dia_offset": 5}]}
+    proj = MotorProjecaoCaixa.projetar("C_TEST", 6000.0, 22000.0, cliente_raw, hoje=date(2026, 9, 21))
+    assert proj.regime == RegimeCliente.NEUTRO
+    assert 1000.0 <= proj.saldo_livre_efetivo < 2000.0
+    autorizado, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
+    assert not autorizado and "BLOQUEIO_COLCHAO" in motivo

@@ -45,6 +45,8 @@ async function conectar() {
 async function main() {
   if (!CHROME) throw new Error("Chrome/Edge não encontrado");
   await esperarServidor();
+  // estado inicial do banco simulado: sem isso, uma captura anterior (Diego já aplicou) muda os cards
+  await fetch(`${BASE}/demo/reiniciar`, { method: "POST" });
   fs.mkdirSync(SAIDA, { recursive: true });
   const perfil = fs.mkdtempSync(path.join(os.tmpdir(), "prints-"));
   const chrome = spawn(CHROME, [

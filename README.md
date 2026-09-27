@@ -118,10 +118,11 @@ O Itaú possui diretrizes inegociáveis de segurança e ética algorítmica. O s
 │   ├── servidor.py            # Servidor FastAPI com endpoints REST bancários
 │   └── static/index.html      # Mobile UI autêntica com Smart Cards e iToken
 ├── docs/                      # Documentação Executiva e Arquitetural
+│   ├── ARQUITETURA_GCP_GUARDRAILS_E_JORNADA.md  # Comece por aqui: GCP, guardrails e fluxo da jornada
 │   ├── ARQUITETURA_E_ADRS.md  # Architectural Decision Records (ADR 001 a 006)
 │   ├── RAI_E_GUARDRAILS.md    # Política de IA Responsável e Compliance
 │   ├── BUSINESS_CASE_E_DADOS.md # Estudo empírico BigQuery e Unit Economics
-│   └── ROTEIRO_DEMO_PITCH.md  # Script de apresentação para a banca (3 min)
+│   └── ROTEIRO_DEMO_PITCH.md  # Roteiro da apresentação para a banca (5 min)
 └── tests/                     # 156 testes automatizados (100% passing)
 ```
 

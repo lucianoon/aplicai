@@ -1,4 +1,4 @@
-# Documento técnico resumido — Copiloto da Fatura
+# Documento técnico resumido — Aplicaí
 
 > Entregável 5. Justificativas, limitações, estratégia de testes e próximos passos para produção.
 

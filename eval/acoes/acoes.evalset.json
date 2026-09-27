@@ -1,6 +1,6 @@
 {
   "eval_set_id": "copiloto_fatura_acoes_v1",
-  "name": "Copiloto da Fatura - ações pausam para aprovação",
+  "name": "Aplicaí - ações pausam para aprovação",
   "description": "Pedido de parcelamento seguido de confirmação na conversa: o parcelar_fatura precisa ser chamado (e pausa pedindo aprovação). O agente pode avisar de uma opção mais barata antes; avaliado só pela trajetória.",
   "eval_cases": [
     {

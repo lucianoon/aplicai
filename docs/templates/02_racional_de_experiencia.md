@@ -1,4 +1,4 @@
-# Racional de experiência — Copiloto da Fatura
+# Racional de experiência — Aplicaí
 
 > Entregável 3. Peso: Design & Experiência (20%). Pergunta da banca: "essa solução realmente mudaria o comportamento do usuário?"
 

@@ -1,4 +1,4 @@
-"""Mecanismo de RAG e Vector Search do Copiloto da Fatura.
+"""Mecanismo de RAG e Vector Search do Aplicaí.
 
 Provê recuperação semântica sobre regulamentações financeiras, normas do Bacen,
 regras de IOF e políticas de parcelamento de fatura.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Itaú SuperApp | Gestor de Caixa & Copiloto da Fatura (IA.Í)</title>
+<title>Itaú SuperApp | Aplicaí</title>
 <style>
   :root {
     --itau-laranja: #ec7000;
@@ -217,7 +217,7 @@
   .extrato-sub { font-size: 11px; color: var(--itau-texto-secundario); }
   .extrato-val { font-weight: 700; color: var(--itau-azul-header); }
 
-  /* Botão Flutuante da IA.Í */
+  /* Botão Flutuante do Aplicaí */
   .btn-flutuante-ia {
     position: absolute; bottom: 80px; right: 20px; z-index: 40;
     background: linear-gradient(135deg, var(--itau-laranja) 0%, #e65100 100%);
@@ -296,7 +296,7 @@
   .recibo-corpo { font-size: 12px; line-height: 1.5; color: var(--itau-texto-secundario); margin-bottom: 16px; }
   .recibo-hash { font-family: monospace; font-size: 11px; background: #f1f5f9; padding: 6px; border-radius: 6px; word-break: break-all; margin-top: 8px; }
 
-  /* Drawer Lateral do Copiloto IA.Í */
+  /* Drawer Lateral do Aplicaí */
   .drawer-overlay {
     position: absolute; inset: 0; background: rgba(6, 20, 38, 0.6); z-index: 50;
     display: none; align-items: flex-end;
@@ -489,7 +489,7 @@
           ⚡ Aplicar com iToken (1 toque)
         </button>
         <button type="button" class="btn-acao-smart-secundaria" id="btn-smart-acao-secundaria">
-          💬 Entender cálculo com a IA.Í
+          💬 Entender cálculo com o Aplicaí
         </button>
       </div>
     </section>
@@ -528,10 +528,10 @@
 
   </main>
 
-  <!-- Botão Flutuante IA.Í Copiloto -->
-  <button class="btn-flutuante-ia" id="btn-abrir-ia-flutuante" aria-label="Abrir Copiloto IA.Í">
+  <!-- Botão Flutuante Aplicaío -->
+  <button class="btn-flutuante-ia" id="btn-abrir-ia-flutuante" aria-label="Abrir Aplicaí">
     <div class="ia-dot-pulsing"></div>
-    <span>IA.Í Copilot</span>
+    <span>Aplicaí</span>
   </button>
 
   <!-- Bottom Navigation -->
@@ -550,7 +550,7 @@
     </button>
     <button class="nav-item" id="nav-ia">
       <span class="icon">✨</span>
-      IA.Í
+      Aplicaí
     </button>
   </nav>
 
@@ -593,12 +593,12 @@
     </div>
   </div>
 
-  <!-- DRAWER DA IA.Í COPILOTO (ON-DEMAND) -->
+  <!-- DRAWER DO APLICAÍ COPILOTO (ON-DEMAND) -->
   <div class="drawer-overlay" id="drawer-ia-overlay">
     <div class="drawer-chat">
       <div class="drawer-header">
         <div class="drawer-titulo-box">
-          <b>IA.Í — Copiloto Financeiro Itaú</b>
+          <b>Aplicaí — assistente financeiro Itaú</b>
           <span>Assistente Inteligente Autônomo</span>
         </div>
         <button class="btn-fechar-drawer" id="btn-fechar-drawer" type="button">✕</button>
@@ -699,7 +699,7 @@ async function carregarConta(clienteId) {
     // Atualiza Extrato
     renderizarExtrato(dados.extrato_recente);
 
-    // Inicializa Sessão no ADK para a IA.Í
+    // Inicializa Sessão no ADK para o Aplicaí
     await iniciarSessaoADK(dados.cliente_id, dados.primeiro_nome);
 
   } catch (e) {
@@ -858,7 +858,7 @@ $("btn-fechar-comprovante").onclick = () => {
   $("modal-comprovante-overlay").style.display = "none";
 };
 
-// 6. DRAWER DA IA.Í (COPILOTO CONVERSACIONAL ON-DEMAND)
+// 6. DRAWER DO APLICAÍ (COPILOTO CONVERSACIONAL ON-DEMAND)
 function abrirDrawerIA() {
   $("drawer-ia-overlay").style.display = "flex";
   $("drawer-input").focus();
@@ -881,9 +881,9 @@ async function iniciarSessaoADK(cid, primNome) {
       const livre = formatarBRL(contaAtiva.diagnostico.saldo_livre_efetivo);
       const reserva = formatarBRL(contaAtiva.diagnostico.colchao_minimo_obrigatorio);
       const rend = contaAtiva?.diagnostico?.simulacao_investimento ? formatarBRL(contaAtiva.diagnostico.simulacao_investimento.rendimento_liquido) : "R$ 189,07";
-      adicionarBolha(`Olá, ${escapar(primNome)}! Sou a IA.Í, seu <b>Agente de Investimento e Liquidez</b>.<br><br>⚡ <b>Oportunidade Detectada:</b> Identifiquei <b>${livre}</b> ociosos na sua conta corrente rendendo 0%.<br><br>Sua <b>Reserva para Contas do Mês (${reserva})</b> já está protegida para cobrir todas as despesas e a fatura dos próximos 30 dias.<br><br>Sua liquidez excedente pode render <b>+${rend} líquidos por mês</b> no CDB Itaú 100% CDI com resgate diário. Deseja aplicar via iToken?`, "bot");
+      adicionarBolha(`Olá, ${escapar(primNome)}! Sou o Aplicaí, seu <b>Agente de Investimento e Liquidez</b>.<br><br>⚡ <b>Oportunidade Detectada:</b> Identifiquei <b>${livre}</b> ociosos na sua conta corrente rendendo 0%.<br><br>Sua <b>Reserva para Contas do Mês (${reserva})</b> já está protegida para cobrir todas as despesas e a fatura dos próximos 30 dias.<br><br>Sua liquidez excedente pode render <b>+${rend} líquidos por mês</b> no CDB Itaú 100% CDI com resgate diário. Deseja aplicar via iToken?`, "bot");
     } else {
-      adicionarBolha(`Olá, ${escapar(primNome)}! Sou a IA.Í, sua especialista autônoma em gestão de caixa e finanças Itaú. Como posso te apoiar hoje?`, "bot");
+      adicionarBolha(`Olá, ${escapar(primNome)}! Sou o Aplicaí, seu assistente para fazer a sobra do mês render sem faltar para as contas. Como posso te apoiar hoje?`, "bot");
     }
     atualizarSugestoesDrawer();
   } catch (e) {

@@ -1,4 +1,4 @@
-# Proposta de negócio — Copiloto da Fatura
+# Proposta de negócio — Aplicaí
 
 > Entregável 1. Peso na rubrica: Business Thinking (30%). Números públicos com fonte e data; números da base
 > sintética marcados como ilustração. Consultado em 23/09/2026.
@@ -70,7 +70,7 @@ evitados se seguirem a recomendação, cerca de R$ 363 por cliente por mês.
 ## 7. Narrativa problema → solução → resultado (abertura do pitch)
 1. Todo mês, milhões de pessoas descobrem no vencimento que não têm o valor da fatura, pagam o mínimo e caem no
    rotativo: 436% ao ano e 66% de inadimplência.
-2. O Copiloto da Fatura avisa antes, mostra em reais quanto custa cada saída e executa a escolha só com a
+2. O Aplicaí avisa antes, mostra em reais quanto custa cada saída e executa a escolha só com a
    aprovação do cliente, com as contas feitas por código.
 3. A Ana economiza R$ 375 neste mês, recebe o aviso antes da próxima fatura, e o banco troca uma dívida que
    tende a virar inadimplência por um parcelamento que cabe no bolso.

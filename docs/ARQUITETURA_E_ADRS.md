@@ -1,7 +1,7 @@
 # Decisões de Arquitetura de Software (ADRs)
 
 > **Documento Oficial de Engenharia & Arquitetura de Solução**  
-> **Sistema:** Itaú Gestor de Liquidez & Investimentos com IA (Cash Sweeper)  
+> **Sistema:** Aplicaí  
 > **Framework Base:** Google ADK 2.x (Agent Development Kit)  
 > **Padrão de Governança:** Zero-Trust Financial Computing & Zero-LLM Math
 
@@ -129,7 +129,7 @@ Usuários de banco de varejo não utilizam caixas de diálogo conversacionais pa
 Invertemos o paradigma de "Chat-First" para **"Action-First com IA On-Demand"**:
 - **Smart Cards Proativos na Home:** O aplicativo expõe as oportunidades financeiras calculadas pelo agente diretamente na tela inicial da conta (ex: *"Você possui R$ 28.550 parados a 0%. Aplicar com iToken"*).
 - **Ação em 1 Toque:** O usuário pode efetivar a decisão sem digitar uma única palavra.
-- **Copiloto Conversacional Sob Demanda (Drawer Lateral):** O assistente IA.Í fica acessível via botão flutuante para clientes que desejam aprofundar, simular cenários futuros ou tirar dúvidas em linguagem natural.
+- **Copiloto Conversacional Sob Demanda (Drawer Lateral):** O assistente Aplicaí fica acessível via botão flutuante para clientes que desejam aprofundar, simular cenários futuros ou tirar dúvidas em linguagem natural.
 
 ---
 

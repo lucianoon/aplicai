@@ -1,4 +1,4 @@
-# Itaú Gestor de Liquidez & Investimentos com IA (Cash Sweeper)
+# Aplicaí: a sobra do mês rendendo, sem faltar para as contas
 
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Google ADK 2.x](https://img.shields.io/badge/Google_ADK-2.x-orange.svg)](https://github.com/google/agent-development-kit)
@@ -20,7 +20,7 @@ No setor bancário de varejo e alta renda, existem dois extremos críticos ident
 ### A Inovação do Produto: Investimento com Proteção Ativa de Caixa
 A maioria dos "robôs de investimento" do mercado falha porque é **passiva** (depende do cliente abrir um chat para pedir conselho) e **cega** (recomenda produtos sem olhar o fluxo futuro de despesas essenciais).
 
-O **Itaú Gestor de Liquidez com IA** inova ao operar em ciclo fechado:
+O **Aplicaí** inova ao operar em ciclo fechado:
 - **Proatividade Zero-Friction:** Analisa o fluxo de caixa dos próximos 30 dias em segundo plano.
 - **Colchão de Segurança Dinâmico:** Reserva e blinda os valores exatos de despesas essenciais e faturas até o próximo ciclo salarial.
 - **Varredura de Liquidez (Cash Sweeper):** Sugere a aplicação do excedente no **CDB Itaú Liquidez Diária (100% CDI)** com **1 toque via iToken**.
@@ -37,7 +37,7 @@ O sistema adota uma arquitetura em camadas de **Confiança Zero (Zero-Trust)**, 
 flowchart TD
     subgraph UI["1. Camada de Experiência (Itaú SuperApp)"]
         SC["Smart Cards Nativos (Action-First)"]
-        DR["IA.Í Copilot On-Demand (Drawer)"]
+        DR["Aplicaí (chat sob demanda)"]
         IT["Modal iToken Oficial (2-Phase Commit)"]
     end
 
@@ -106,7 +106,7 @@ O Itaú possui diretrizes inegociáveis de segurança e ética algorítmica. O s
 │   ├── autorizacao.py         # Capability HMAC-SHA256 e 2-Phase Commit
 │   ├── prompts.py             # Prompts de sistema com diretrizes de conformidade
 │   └── tools/                 # Ferramentas determinísticas conectadas ao Core
-├── gestor_caixa/              # Módulo do Gestor de Liquidez & Investimento
+├── gestor_caixa/              # Módulo de liquidez e investimento
 │   ├── motor_projecao.py      # Cálculo determinístico do colchão de 30 dias
 │   ├── portao_risco.py        # Regras de elegibilidade: situação financeira + perfil de investidor
 │   ├── simulador_liquidez.py  # Matemática do CDB 100% CDI, IOF e IR

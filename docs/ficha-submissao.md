@@ -4,7 +4,7 @@ Texto pronto para colar no formulário da Batalha de Agentes (Itaú + Google).
 
 | Campo | Texto |
 |---|---|
-| **Nome do Agente** | IA.Í — Copiloto da Fatura |
+| **Nome do Agente** | Aplicaí — Aplicaí |
 | **Equipe** | Luciano de Oliveira Nunes |
 
 ## O Problema
@@ -28,13 +28,13 @@ Para quem estamos resolvendo e em qual situação?
 - **Bruno (C002), folga:** o salário cai antes do vencimento; dá para quitar sem juros e preservar a reserva.
 - **Carla (C003), aperto:** o saldo não cobre o mínimo; o momento é de alívio e, se houver sofrimento, acolhimento humano (simulado).
 
-Canal: conversa no app/WhatsApp do banco, com o titular já identificado. A IA.Í não escolhe o cliente.
+Canal: conversa no app/WhatsApp do banco, com o titular já identificado. O Aplicaí não escolhe o cliente.
 
 ## Proposta do Agente
 
 Como o agente ajudará a resolver essa dor?
 
-**1 proposta de valor.** A IA.Í, inteligência artificial do Itaú, transforma dado em contexto, contexto em previsão e previsão em um próximo passo que cabe — a pessoa decide; dinheiro só se move depois do Aprovar.
+**1 proposta de valor.** O Aplicaí, inteligência artificial do Itaú, transforma dado em contexto, contexto em previsão e previsão em um próximo passo que cabe — a pessoa decide; dinheiro só se move depois do Aprovar.
 
 **3 capacidades**
 
@@ -51,7 +51,7 @@ Quais dados, inteligência e ações tornam a solução possível?
 1. **Entrada** — titular da sessão, PII redigida, injeção bloqueada; mensagem nova invalida aprovação antiga.
 2. **Leitura em paralelo** — fatura, fluxo previsto e perfil no core mock.
 3. **Diagnóstico em código** — opções, recomendada e “se não fizer nada”; o LLM não calcula.
-4. **Conselho** — classificador + IA.Í no ciclo entender → antecipar → orientar; RAG nas normas do Bacen (inclui Resolução Conjunta nº 8).
+4. **Conselho** — classificador + Aplicaí no ciclo entender → antecipar → orientar; RAG nas normas do Bacen (inclui Resolução Conjunta nº 8).
 5. **Ação** — `cotar_acao` → `RequestInput` (Aprovar) → `executar` com capacidade HMAC; o core confere de novo.
 
 **Dados / tecnologias**

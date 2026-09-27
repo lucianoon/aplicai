@@ -33,7 +33,7 @@ A tabela `hackathon_dados.extrato_sintetico` no BigQuery contém o histórico an
 
 ## 3. Diagnóstico de Saúde Financeira dos Clientes
 
-Para a jornada do **Copiloto da Fatura**, o comportamento individual de caixa é o fator determinante para prevenir o inadimplemento e a rolagem no rotativo:
+Para a jornada do **Aplicaí**, o comportamento individual de caixa é o fator determinante para prevenir o inadimplemento e a rolagem no rotativo:
 
 ### 3.1 Perfil de Renda Mensal
 * **Renda Média Mensal**: **R$ 8.440,62**
@@ -103,7 +103,7 @@ A análise mês a mês demonstra claramente a dinâmica de caixa:
 
 ## 7. Integrações e Melhorias Implementadas
 
-Para incorporar integralmente os dados reais ao Copiloto da Fatura:
+Para incorporar integralmente os dados reais ao Aplicaí:
 
 1. **Pipeline de Carga e Sincronização (`scripts/carregar_dados_extrato_sintetico.py`)**:
    * Consulta os dados diretamente do BigQuery e consolida perfis completos dos clientes.

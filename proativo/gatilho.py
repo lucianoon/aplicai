@@ -1,4 +1,4 @@
-"""Gatilho proativo: quem precisa do Copiloto da Fatura hoje?
+"""Gatilho proativo: quem precisa do Aplicaí hoje?
 
 Varre a base, projeta o caixa de cada cliente até o vencimento e seleciona
 quem deve receber a abertura de conversa. Tudo determinístico e sem LLM:

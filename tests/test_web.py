@@ -45,7 +45,7 @@ def _aprovacao(eventos):
 
 
 def test_pagina_e_personas(cliente):
-    assert "Copiloto da Fatura" in cliente.get("/").text
+    assert "Aplicaí" in cliente.get("/").text
     dados = cliente.get("/demo/personas").json()
     assert dados["modelo"] == "demo" and [p["id"] for p in dados["personas"]] == ["C001", "C002", "C003", "C004", "C005"]
     ana = dados["personas"][0]

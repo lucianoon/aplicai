@@ -1,4 +1,4 @@
-# Pitch (5 minutos) — Copiloto da Fatura
+# Pitch (5 minutos) — Aplicaí
 
 | Tempo | Bloco | Conteúdo | Quem |
 |---|---|---|---|

@@ -121,7 +121,7 @@ def gerar_cliente(rng: random.Random, i: int) -> dict:
 
 
 def personas_demo() -> list[dict]:
-    """Quatro casos representativos calibrados no BigQuery (extrato_sintetico)."""
+    """Cinco casos representativos: Elaine (C005) tem sobra, mas nunca respondeu o perfil de investidor."""
     ana = {
         "cliente_id": "C001", "perfil_investidor": None, "uuid": "3f3f7877-71fd-4073-b0a8-692b105609d8", "alias_id": "3f3f7877-71fd-4073-b0a8-692b105609d8",
         "nome": "Ana Souza", "idade": 34, "renda_mensal": 3200.0,
@@ -182,14 +182,29 @@ def personas_demo() -> list[dict]:
                            {"dias_atras": 3, "categoria": "combustível", "valor": 124.0, "meio": "cartao"},
                            {"dias_atras": 5, "categoria": "lojas e sites", "valor": 450.0, "meio": "cartao"}],
     }
-    return [ana, bruno, carla, diego]
+    elaine = {
+        "cliente_id": "C005", "perfil_investidor": None,
+        "nome": "Elaine Costa", "idade": 45, "renda_mensal": 9000.0,
+        "saldo_conta": 24000.0, "score": 880, "negativado": False, "letramento_financeiro": "medio",
+        "acessibilidade": None, "canal_preferido": "app", "historico_rotativo_12m": 0,
+        "objetivo_declarado": "reserva de emergência", "limite_total": 20000.0,
+        "fatura": {"valor_total": 2900.0, "dias_ate_vencimento": 6, "status": "aberta",
+                   "itens": [{"categoria": "supermercado", "valor": 1100.0}, {"categoria": "farmácia", "valor": 300.0},
+                             {"categoria": "roupas", "valor": 800.0}, {"categoria": "restaurantes", "valor": 700.0}]},
+        "entradas_previstas": [{"dia_offset": 5, "valor": 9000.0, "descricao": "salário"}],
+        "saidas_previstas": [{"dia_offset": 8, "valor": 2600.0, "descricao": "financiamento imóvel"}],
+        "transacoes_30d": [{"dias_atras": 2, "categoria": "supermercado", "valor": 410.0, "meio": "cartao"},
+                           {"dias_atras": 4, "categoria": "roupas", "valor": 800.0, "meio": "cartao"}],
+    }
+    return [ana, bruno, carla, diego, elaine]
 
 
 def main(n: int = 200, seed: int = 42) -> Path:
     rng = random.Random(seed)
-    # Consome o passo do RNG do cliente 4 para manter a calibragem exata de C005..C200
-    _ = gerar_cliente(rng, 4)
-    sinteticos = [gerar_cliente(rng, i) for i in range(5, n + 1)]
+    # Consome os passos do RNG dos clientes 4 e 5 (hoje personas) para manter C006..C200 iguais
+    for i in (4, 5):
+        gerar_cliente(rng, i)
+    sinteticos = [gerar_cliente(rng, i) for i in range(6, n + 1)]
     clientes = personas_demo() + sinteticos
     payload = {
         "meta": {

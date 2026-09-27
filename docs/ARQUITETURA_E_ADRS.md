@@ -57,7 +57,7 @@ Implementamos a regra de **Zero-LLM Math**:
 - O LLM atua estritamente como **orquestrador semântico e comunicador empático**, recebendo os resultados calculados e formatados via Tool Calls tipadas do ADK.
 
 #### Consequências
-- **Positivas:** 100% de precisão e auditabilidade matemática. Testabilidade unitária completa (144 testes automatizados com tempo de execução < 10 segundos).
+- **Positivas:** 100% de precisão e auditabilidade matemática. Testabilidade unitária completa (156 testes automatizados com tempo de execução < 10 segundos).
 - **Negativas:** A interface de ferramentas (tool schemas) deve ser estritamente tipada com Pydantic v2.
 
 ---

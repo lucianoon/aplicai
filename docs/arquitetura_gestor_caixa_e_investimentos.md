@@ -164,7 +164,7 @@ def classificar_regime_cliente(cliente_extrato: dict) -> RegimeCliente:
 * **Comportamento**:
   1. Identifica que o correntista possui saldo ocioso superior ao colchão do mês.
   2. Formula a proposta: *"Identifiquei que R$ 8.000 da sua conta não serão utilizados antes do dia 25. Sugiro aplicar no CDB de Liquidez Diária, que rende 100% do CDI com garantia do FGC."*
-  3. **Gatilho de Auto-Unwind (Resgate Automático Programado)**: O agente cadastra no Core Bancário o resgate automático para D-1 do débito do financiamento ou fatura, garantindo risco zero de inadimplência.
+  3. **Resgate sugerido antes do maior débito**: o agente informa a data do maior débito do mês (financiamento ou fatura) e sugere o resgate antes dele; como o CDB tem liquidez diária, o cliente resgata com um toque. O agendamento automático do resgate é uma evolução prevista, não parte do protótipo.
 
 #### Agente Especialista 2: Gestor de Passivos (Debt Relief)
 * **Objetivo**: Evitar que quem gasta mais do que ganha caia no rotativo e no cheque especial.
@@ -232,7 +232,7 @@ Para garantir segurança jurídica, financeira e conformidade com o Banco Centra
 
 ### Para a Esteira de Liquidez (Investimentos):
 1. **Volume Captado (AuM - Assets under Management)**: Meta de converter 30% da sobra parada na conta dos clientes elegíveis em CDB/Tesouro Selic no primeiro trimestre.
-2. **Taxa de Sucesso do Auto-Unwind (Resgate Programado)**: 100% de sucesso nos resgates em D-1, garantindo zero ocorrências de cheque especial causadas por aplicações do agente.
+2. **Débitos cobertos após aplicação**: zero ocorrências de cheque especial ou débito devolvido nos 30 dias seguintes a uma aplicação feita pelo agente.
 3. **Receita de Spread / Distribuição**: Incremento da margem financeira líquida gerada pela captação de recursos ociosos.
 
 ### Para a Esteira de Passivos (Dívidas):

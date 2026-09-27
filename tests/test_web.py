@@ -47,7 +47,7 @@ def _aprovacao(eventos):
 def test_pagina_e_personas(cliente):
     assert "Copiloto da Fatura" in cliente.get("/").text
     dados = cliente.get("/demo/personas").json()
-    assert dados["modelo"] == "demo" and [p["id"] for p in dados["personas"]] == ["C001", "C002", "C003", "C004"]
+    assert dados["modelo"] == "demo" and [p["id"] for p in dados["personas"]] == ["C001", "C002", "C003", "C004", "C005"]
     ana = dados["personas"][0]
     assert "PARAR" in ana["abertura"] and dados["personas"][1]["abertura"] is None  # Bruno não precisa de aviso
 
@@ -74,7 +74,7 @@ def test_api_contas_e_diagnostico(cliente):
     res = cliente.get("/api/contas")
     assert res.status_code == 200
     contas = res.json()["contas"]
-    assert len(contas) == 4
+    assert len(contas) == 5
     diego = next(c for c in contas if c["cliente_id"] == "C004")
     assert diego["segmento"] == "Itaú Personnalité"
     assert diego["regime"] == "oportunidade_liquidez"
@@ -108,11 +108,11 @@ def test_api_execucoes_bancarias(cliente):
 
 
 def test_cliente_com_sobra_mas_sem_perfil_ve_card_de_perfil(cliente):
-    STORE._cliente("C004")["perfil_investidor"] = None
-    dados = cliente.get("/api/conta/C004").json()["diagnostico"]
+    dados = cliente.get("/api/conta/C005").json()["diagnostico"]
+    assert dados["regime"] == "oportunidade_liquidez"
     assert dados["elegivel_investimento"] is False
     assert dados["smart_card"]["tipo"] == "ATUALIZAR_PERFIL"
-    res = cliente.post("/api/executar/investimento", json={"cliente_id": "C004", "valor": 1000.0})
+    res = cliente.post("/api/executar/investimento", json={"cliente_id": "C005", "valor": 1000.0})
     assert res.status_code == 400 and "PERFIL" in res.json()["detail"]
 
 

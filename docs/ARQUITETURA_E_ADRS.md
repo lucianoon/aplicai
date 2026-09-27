@@ -25,7 +25,7 @@
 
 #### Contexto
 A literatura tradicional de agentes de investimento para varejo costuma sugerir chatbots consultivos que perguntam o perfil de risco do cliente (suitability) e recomendam ativos de prateleira (CDBs, fundos, ações).  
-Ao analisar a base real de correntistas no BigQuery (`hackathon_dados.extrato_sintetico`), constatamos que **49,3% dos clientes sofrem de déficit mensal e 68,9% caem no crédito rotativo**, enquanto **29,8% dos clientes possuem excedentes de caixa ociosos superiores a R$ 20.000,00 sem rendimento**. Um cliente do Itaú oscila entre esses estados ao longo do mês: no dia 5 recebe salário, no dia 8 tem o débito do financiamento imobiliário (~R$ 2.845) e no dia 28 a fatura do cartão.
+Ao analisar a base real de correntistas no BigQuery (`hackathon_dados.extrato_sintetico`), constatamos que **49,3% dos clientes gastam mais do que ganham e 32,7% entraram no cheque especial em 2025**, enquanto os outros **50,7% têm sobra mensal que fica parada na conta**. Um cliente oscila entre esses estados ao longo do mês: recebe o salário, tem débitos fixos como financiamento e escola logo em seguida e, depois, a fatura do cartão.
 
 #### Decisão
 Adotamos uma **Arquitetura Biphasic**:

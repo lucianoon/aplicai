@@ -11,17 +11,17 @@
 
 Ao realizarmos a Análise Exploratória de Dados (EDA) na base oficial da Batalha de Agentes, desmistificamos a premissa de que "clientes bancários só precisam de dicas genéricas de educação financeira". Os dados revelam duas realidades estruturais:
 
-### 1.1 O Abismo da Liquidez Ociosa (R$ 13,48 Milhões a 0%)
-- **298 clientes (29,8% da base)** mantêm sistematicamente saldos médios em conta corrente superiores a **R$ 20.000,00**, com pico de até R$ 38.250,00.
-- Esse capital ocioso não está aplicado em nenhuma modalidade de investimento, rendendo **0% ao mês**.
-- **O Custo de Oportunidade do Cliente:** Com o CDI a ~10,75% a.a., um saldo médio de R$ 25.000,00 deixa de render aproximadamente **R$ 180 a R$ 210 líquidos por mês** (mais de R$ 2.400 ao ano por cliente).
+### 1.1 A Sobra Parada na Conta
+- **507 clientes (50,7% da base)** ganham mais do que gastam no mês.
+- Parte dessa sobra fica na conta corrente sem nenhum rendimento, rendendo **0% ao mês**.
+- **O Custo de Oportunidade do Cliente:** Com o CDI a ~10,75% a.a., R$ 25.000,00 parados deixam de render cerca de **R$ 165 líquidos em 30 dias** (cerca de R$ 2.200 em um ano), pelo simulador do projeto.
 - **A Oportunidade para o Itaú:** Ao oferecer o *Cash Sweeper* automatizado com resgate D+0, o Itaú converte depósitos à vista não fidelizados em captação líquida estável de **CDB e LCI/LCA**, aumentando o *Share of Wallet* e a retenção frente a fintechs concorrentes.
 
-### 1.2 O Ciclo Destrutivo do Crédito Rotativo (R$ 541 Mil em Juros)
-- **493 clientes (49,3% da base)** apresentam déficit orçamentário mensal recorrente (média de -R$ 1.736,00/mês).
-- **689 clientes (68,9%)** recorreram a pagamentos mínimos ou parciais de fatura em 2025, caindo no crédito rotativo (taxa média de 14,9% ao mês ou 436% ao ano).
-- **R$ 541.280,00** foram pagos exclusivamente em encargos e juros de cheque especial e rotativo por esse grupo.
-- **A Descoberta do "Gatilho do Dia 8":** Mais de 70% dos clientes que entraram no rotativo possuem débitos automáticos fixos de **Financiamento Habitacional / Imobiliário (~R$ 2.845,00)** agendados para o **dia 8** do mês. O descasamento entre o pagamento do financiamento no início do mês e o fechamento da fatura no final do mês consome a liquidez, empurrando o correntista para a inadimplência.
+### 1.2 O Aperto que Vira Juros
+- **493 clientes (49,3% da base)** gastam mais do que ganham no mês.
+- **327 clientes (32,7%)** entraram no cheque especial ao longo de 2025, com **56.141 transações** feitas com saldo devedor. O pior saldo individual chegou a **-R$ 42.649,81**.
+- No rotativo do cartão, a taxa usada no projeto é de **14,9% ao mês**: é o crédito mais caro do mercado.
+- **O descasamento de datas:** contas fixas como financiamento imobiliário e mensalidade escolar vencem logo depois do salário, e a fatura do cartão vem depois. Quando o dinheiro acaba antes da fatura, o cliente cai no rotativo ou no cheque especial.
 
 ---
 
@@ -45,12 +45,12 @@ A resposta baseia-se na matemática atuarial de risco de crédito:
 
 ## 3. Unit Economics & Projeção de Escala
 
-Considerando a base do piloto e extrapolando para 100.000 correntistas Itaú:
+Hipóteses ilustrativas para um piloto com 100.000 correntistas, a validar no piloto (não são medições da base):
 
 | Métrica | Base Atual (Sem Agente) | Projeção com Agente (Piloto 100k) | Impacto Anual Projetado |
 | :--- | :--- | :--- | :--- |
 | **Captação Nova em CDB (Sweeper)** | R$ 0,00 | R$ 380 Milhões aplicados | +R$ 15,2 Mi em Margem Financeira Líquida |
-| **Clientes em Rotativo no Ciclo** | 49.300 clientes (49,3%) | 29.500 clientes (-40%) | -19.800 clientes em risco |
+| **Clientes que Gastam Mais do que Ganham** | 49.300 clientes (49,3%) | 29.500 clientes (-40%) | -19.800 clientes em risco |
 | **Perda com PDD / Write-off de Cartões** | R$ 42,0 Milhões | R$ 26,5 Milhões | **Economia de R$ 15,5 Milhões em PDD** |
 | **Custo de Operação da IA (Inferência Gemini)** | R$ 0,00 | R$ 0,0018 por cliente/mês | R$ 216.000 / ano (ROI > 140x) |
 

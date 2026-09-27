@@ -22,8 +22,8 @@
 
 ### [00:00 - 00:35] O Gancho: A Descoberta no BigQuery
 > *"Boa tarde, banca! Ao analisarmos as quase 500 mil transações da base oficial do Itaú no BigQuery, encontramos dois extremos gritantes:*  
-> *De um lado, **R$ 13,5 milhões parados em conta corrente rendendo exatamente zero** em quase 300 contas.*  
-> *Do outro lado, correntistas pagando **mais de meio milhão de reais em juros de rotativo**, quase sempre surpreendidos pelo débito do financiamento habitacional no dia 8.*  
+> *De um lado, **metade dos clientes ganha mais do que gasta, e essa sobra fica parada na conta rendendo zero**.*  
+> *Do outro lado, **a outra metade gasta mais do que ganha: um terço da base entrou no cheque especial em 2025**, muitas vezes porque o financiamento e a escola vencem logo depois do salário.*  
 > *A maioria dos robôs de investimento do mercado falha porque é cega: tenta vender produto sem olhar o fluxo de contas do cliente. Hoje, apresentamos o **Itaú Gestor de Liquidez com IA**."*
 
 ---

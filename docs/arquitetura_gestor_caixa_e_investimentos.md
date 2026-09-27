@@ -13,20 +13,20 @@ A análise empírica dos 1.000 clientes da base de extratos revela uma assimetri
 ```
 [=============================== BASE DE 1.000 CLIENTES ===============================]
 |--- 493 Clientes em Déficit Crônico (49,3%) ---|--- 507 Clientes Superavitários (50,7%) ---|
-| • Gastam R$ 9.190 para renda de R$ 7.454      | • 298 clientes com > R$ 20.000 parados     |
-| • 68,9% rolaram rotativo a 436% a.a. em 2025  | • R$ 13,48 milhões dormindo na conta a 0%  |
-| • R$ 541 mil pagos em juros de conta          | • R$ 8,75 milhões no top 298 correntistas   |
+| • Gastam mais do que ganham no mês            | • Ganham mais do que gastam no mês         |
+| • 327 entraram no cheque especial             | • Sobra parada na conta a 0%               |
+| • 56.141 transações no negativo               | • Contas fixas logo após o salário         |
 | • Dor: Sufocamento por dívida e contas fixas  | • Dor: Custo de oportunidade e inércia     |
 ```
 
 ### 1.2 Por que um "Robo-Advisor Tradicional de Investimento" Falha
 1. **Inviabilidade para metade da base**: Para 49,3% dos clientes, qualquer oferta de aplicação financeira é uma aberração matemática e ética. O correntista paga **15% ao mês (436% ao ano)** no rotativo e **8% ao mês** no cheque especial. Oferecer um CDB que rende **0,9% ao mês (11% ao ano)** para quem está endividado destrói a confiança no banco e viola as normas de *Suitability* (Resolução CVM 30 e Resolução CMN 4.949).
-2. **Inflexibilidade dos clientes superavitários**: 70% dos clientes da base possuem contratos rígidos de **Financiamento Imobiliário** (débito de R$ 2.845 no dia 8 do mês) e **Mensalidade Escolar** (débito de R$ 1.032). Se o produto travar o capital em ativos sem liquidez imediata, o cliente terá sua conta corrente estourada na primeira semana do mês.
+2. **Inflexibilidade dos clientes superavitários**: Muitos clientes têm contas fixas rígidas logo depois do salário, como **Financiamento Imobiliário** e **Mensalidade Escolar**. Se o produto travar o capital em ativos sem liquidez imediata, o cliente terá sua conta corrente estourada na primeira semana do mês.
 
 ### 1.3 A Tese da Solução: O Agente Bifásico de Caixa
 A solução técnica viável é um **Orquestrador Autônomo de Liquidez** com duas esteiras especializadas:
 * **Esteira de Passivos (Debt Relief)**: Detecta o risco de déficit antes do vencimento da fatura e estanca o rotativo e o cheque especial.
-* **Esteira de Liquidez (Cash Sweeping & Otimização)**: Identifica o capital ocioso (os R$ 13,5M parados), calcula a margem de segurança para despesas contratuais e aplica o excedente em CDB de liquidez diária com resgate automático programado.
+* **Esteira de Liquidez (Cash Sweeping & Otimização)**: Identifica a sobra parada na conta, calcula a margem de segurança para despesas contratuais e aplica o excedente em CDB de liquidez diária com resgate automático programado.
 
 ---
 
@@ -112,8 +112,8 @@ flowchart TD
 ### 4.1 Camada 1: Motor Preditivo de Fluxo de Caixa e Calendário
 
 O motor opera monitorando os eventos identificados no extrato:
-* **Entradas de Salário CLT**: 88% do volume cai entre os dias 5 e 7 do mês.
-* **Débito de Financiamento Habitacional**: 8.400 lançamentos no dia 8 (ticket médio: R$ 2.845).
+* **Entradas de Salário**: identificadas pela recorrência mensal no extrato.
+* **Débito de Financiamento Habitacional**: débito fixo mensal logo após o salário.
 * **Débitos de Contas Fixas**: Condomínio e escola entre dias 10 e 14.
 * **Vencimentos de Cartão**: Dias 15, 20, 25 e 30.
 * **Débito de Juros e Encargos**: Dia 28 do mês.
@@ -160,14 +160,14 @@ def classificar_regime_cliente(cliente_extrato: dict) -> RegimeCliente:
 ### 4.3 Camada 3: Orquestração Multi-Agente (ADK)
 
 #### Agente Especialista 1: Otimizador de Liquidez (Cash Sweeper)
-* **Objetivo**: Ativar os R$ 13,48 milhões ociosos da base.
+* **Objetivo**: Fazer render a sobra que hoje fica parada na conta.
 * **Comportamento**:
   1. Identifica que o correntista possui saldo ocioso superior ao colchão do mês.
   2. Formula a proposta: *"Identifiquei que R$ 8.000 da sua conta não serão utilizados antes do dia 25. Sugiro aplicar no CDB de Liquidez Diária, que rende 100% do CDI com garantia do FGC."*
   3. **Gatilho de Auto-Unwind (Resgate Automático Programado)**: O agente cadastra no Core Bancário o resgate automático para D-1 do débito do financiamento ou fatura, garantindo risco zero de inadimplência.
 
 #### Agente Especialista 2: Gestor de Passivos (Debt Relief)
-* **Objetivo**: Estancar a sangria de 68,9% da base que recorre ao rotativo.
+* **Objetivo**: Evitar que quem gasta mais do que ganha caia no rotativo e no cheque especial.
 * **Comportamento**:
   1. Identifica o déficit de caixa D-5 antes do vencimento da fatura.
   2. Demonstra o custo real da inércia: *"Se pagar o mínimo de R$ 250, a fatura rolará no rotativo a 15% ao mês, custando R$ X de juros. Se parcelar em 6x fixas, você economiza R$ Y."*
@@ -231,7 +231,7 @@ Para garantir segurança jurídica, financeira e conformidade com o Banco Centra
 ## 7. Indicadores e KPIs de Sucesso do Produto
 
 ### Para a Esteira de Liquidez (Investimentos):
-1. **Volume Captado (AuM - Assets under Management)**: Meta de converter 30% dos R$ 13,48 milhões parados na conta em CDB/Tesouro Selic no primeiro trimestre.
+1. **Volume Captado (AuM - Assets under Management)**: Meta de converter 30% da sobra parada na conta dos clientes elegíveis em CDB/Tesouro Selic no primeiro trimestre.
 2. **Taxa de Sucesso do Auto-Unwind (Resgate Programado)**: 100% de sucesso nos resgates em D-1, garantindo zero ocorrências de cheque especial causadas por aplicações do agente.
 3. **Receita de Spread / Distribuição**: Incremento da margem financeira líquida gerada pela captação de recursos ociosos.
 

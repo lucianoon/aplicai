@@ -3,8 +3,8 @@
 Endpoints:
 - /                             : Tela principal do Itaú SuperApp (Mobile)
 - /api/contas                   : Lista de contas disponíveis no ambiente
-- /api/conta/{cliente_id}       : Visão consolidada (Saldos, Fatura, Custódia, Smart Cards do Gestor de Caixa)
-- /api/executar/investimento    : Execução de aplicação CDB com capability HMAC (2-Phase Commit)
+- /api/conta/{cliente_id}       : Visão consolidada (saldos, fatura, custódia e card da situação do mês)
+- /api/executar/investimento    : Aplicação em CDB com aprovação e autorização assinada
 - /api/executar/resgate         : Resgate de CDB para conta corrente
 - /api/executar/parcelamento    : Contratação de parcelamento sem rotativo
 - /demo/personas, /demo/reiniciar : Compatibilidade retroativa para suíte de testes
@@ -83,15 +83,15 @@ PERSONAS = {
     },
     "C004": {
         "nome": "Diego Takahashi",
-        "tag": "Investimento Agêntico (Cash Sweeper)",
+        "tag": "Sobra para investir",
         "badge": "R$ 28.550 Ociosos a 0%",
         "cor": "sucesso",
         "bigquery_id": "fe52b305-9f7c-4e06-8bfe-7950f882fdfa",
-        "resumo": "Saldo de R$ 38.250,00 na conta corrente rendendo 0%. O agente blindou a Reserva de Contas de R$ 9.700,00 para proteger o mês e identificou R$ 28.550,00 de excedente para aplicação imediata em CDB 100% CDI.",
+        "resumo": "Saldo de R$ 38.250,00 na conta corrente rendendo 0%. O Aplicaí reservou R$ 9.700,00 para as contas do mês e identificou R$ 28.550,00 de sobra para aplicar em CDB de liquidez diária (100% do CDI).",
         "fatura_formatada": "R$ 4.250,00",
         "saldo_formatado": "R$ 38.250,00",
         "vencimento_texto": "Vence em 8 dias (reserva protegida)",
-        "cenario": "Varredura de Liquidez e Rentabilização Autônoma",
+        "cenario": "A sobra do mês rendendo, com as contas protegidas",
     },
     "C005": {
         "nome": "Elaine Costa",
@@ -152,7 +152,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
         smart_card = {
             "tipo": "OPORTUNIDADE_CDB",
             "icone": "⚡",
-            "tag": "Investimento Agêntico · Cash Sweeper",
+            "tag": "Sobra para investir",
             "titulo": f"Varredura de Liquidez: {formatar_moeda(proj.saldo_livre_efetivo)} ociosos na conta corrente",
             "descricao": (
                 f"Calculamos suas despesas até o próximo ciclo (compromissos fixos e fatura protegidos pela nossa Reserva de Contas de {formatar_moeda(proj.colchao_minimo_obrigatorio)}). "
@@ -165,13 +165,13 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                 "valor": proj.saldo_livre_efetivo,
                 "dias_permanencia": 30,
             },
-            "acao_secundaria_texto": "Explicar Investimento Agêntico com o Aplicaí",
+            "acao_secundaria_texto": "Entender o cálculo com o Aplicaí",
             "acao_secundaria_prompt": (
-                f"Como o agente de investimento calculou a reserva blindada de {formatar_moeda(proj.colchao_minimo_obrigatorio)} "
+                f"Como o Aplicaí calculou a reserva de {formatar_moeda(proj.colchao_minimo_obrigatorio)} para as contas do mês "
                 f"e por que recomendou aplicar {formatar_moeda(proj.saldo_livre_efetivo)} no CDB de liquidez diária?"
             ),
             "destaque_valor": f"+{formatar_moeda(rend_mes)}/mês líquidos",
-            "destaque_label": "Rendimento Agêntico Estimado",
+            "destaque_label": "Rendimento líquido estimado (30 dias)",
             "cor_tema": "laranja",
         }
     elif proj.regime.value == "oportunidade_liquidez":
@@ -239,7 +239,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
             smart_card = {
                 "tipo": "CARTEIRA_RENTABILIZADA",
                 "icone": "🌱",
-                "tag": "Investimento Agêntico Ativo",
+                "tag": "Contas do mês protegidas",
                 "titulo": f"Patrimônio Otimizado: {formatar_moeda(float(raw.get('saldo_investido', 0.0)))} rendendo 100% CDI",
                 "descricao": (
                     f"Sua liquidez ociosa está alocada no CDB Itaú com rendimento de 100% CDI e resgate diário. "

@@ -43,6 +43,10 @@
 - **Ação:** abrir a conta da Carla.
 > "A Carla está com a conta negativa e uma fatura vencendo em dois dias. Aqui o app não oferece investimento nenhum: os juros da dívida dela são muito maiores que qualquer rendimento. Ele acolhe e encaminha para renegociação com uma pessoa, como pede a Lei do Superendividamento. E essa trava não depende da IA: mesmo que alguém pedisse a aplicação direto, o banco recusaria."
 
+### [opcional, 15 s] Elaine: sobra, mas sem perfil de investidor
+- **Ação:** abrir a conta da Elaine (só se a banca perguntar sobre perfil de investidor, ou no lugar da Ana se sobrar tempo).
+> "A Elaine tem R$ 24.000 e sobram R$ 17.150 depois das contas do mês, mas ela nunca respondeu o perfil de investidor. Então não há oferta: o app pede a atualização do perfil. E se alguém tentasse aplicar por ela, o banco recusaria."
+
 ### [2:35–3:20] Demo 3: Ana, pelo chat
 - **Ação:** abrir a IA.Í na conta da Ana e digitar: *"Não vou conseguir pagar a fatura toda, o que eu faço?"*
 > "A Ana tem R$ 610 e uma fatura de R$ 1.850. A IA mostra a melhor opção que cabe no bolso dela: pagar R$ 549 agora e parcelar o resto em 6 vezes de R$ 294,04. Isso custa R$ 375,10 a menos do que pagar o mínimo e entrar no rotativo. Esses números não foram calculados pela IA: vêm do código, e a IA só explica."
@@ -68,6 +72,7 @@
 - **Gemini fora do ar ou sem cota:** subir o servidor com `COPILOTO_MODEL=demo`; o chat da Ana roda sem internet.
 - **App não abre:** narrar com prints das telas do Diego e da Carla (deixar as abas abertas antes).
 - **Tempo estourando:** se a demo passar de 2 minutos, cortar a Ana e ficar com Diego e Carla.
+- **Chat no plano B:** o modo `demo` só cobre a jornada da fatura (Ana). Não digite perguntas sobre investimento no chat sem o Gemini; mostre Diego, Carla e Elaine pelos cards, que são código.
 
 ---
 

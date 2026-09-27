@@ -85,7 +85,7 @@ O código implementa **portões lógicos estritos** que a LLM não tem permissã
 ```python
 # Trecho de gestor_caixa/portao_risco.py
 if projecao.saldo_atual < 0:
-    return False, "BLOQUEIO_CVM: Cliente com saldo devedor em conta corrente."
+    return False, "BLOQUEIO_SALDO_DEVEDOR: Cliente com saldo devedor em conta corrente."
 
 if projecao.regime == RegimeCliente.DEFICIT_CRITICO:
     return False, "BLOQUEIO_SUITABILITY: Histórico de rotativo ativo. Prioridade é estancar passivos."

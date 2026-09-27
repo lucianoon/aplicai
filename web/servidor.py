@@ -93,6 +93,18 @@ PERSONAS = {
         "vencimento_texto": "Vence em 8 dias (reserva protegida)",
         "cenario": "Varredura de Liquidez e Rentabilização Autônoma",
     },
+    "C005": {
+        "nome": "Elaine Costa",
+        "tag": "Sobra sem Perfil",
+        "badge": "Perfil de investidor pendente",
+        "cor": "atencao",
+        "bigquery_id": None,
+        "resumo": "Saldo de R$ 24.000,00 e sobra de R$ 17.150 depois das contas do mês, mas nunca respondeu o perfil de investidor.",
+        "fatura_formatada": "R$ 2.900,00",
+        "saldo_formatado": "R$ 24.000,00",
+        "vencimento_texto": "Vence em 6 dias",
+        "cenario": "Sem perfil de investidor válido não há oferta",
+    },
 }
 
 app = get_fast_api_app(agents_dir=str(RAIZ), web=False, use_local_storage=False)
@@ -292,7 +304,7 @@ def listar_contas() -> dict[str, Any]:
     """Lista contas disponíveis no ambiente com segmentação bancária real."""
     contas = []
     # Clientes prioritários de demonstração e calibração
-    ids_foco = ["C004", "C001", "C002", "C003"]
+    ids_foco = ["C004", "C005", "C001", "C002", "C003"]
     for cid in ids_foco:
         raw = STORE._cliente(cid)
         seg = obter_segmento_e_conta(cid, raw["renda_mensal"])

@@ -2,7 +2,7 @@
 
 Lê os dados reais da tabela hackathon_dados.extrato_sintetico do projeto batalha-time-09-nciv,
 agrega os 1.000 clientes e gera o arquivo clientes.json compatível com o mock_core/store.py,
-mantendo intactas as 3 personas de teste (C001, C002, C003) para garantir que
+mantendo intactas as 5 personas de demonstração (C001 a C005) para garantir que
 todos os testes do pytest e evalsets continuem passando com 100% de sucesso.
 
 Uso:
@@ -161,7 +161,7 @@ def carregar_clientes_do_bigquery(
         ]
 
         cliente_dict = {
-            "cliente_id": f"C{idx+3:03d}",
+            "cliente_id": f"C{idx+5:03d}",  # C001 a C005 são as personas
             "uuid": uid,
             "alias_id": uid,
             "nome": f"{rng.choice(NOMES)} {rng.choice(SOBRENOMES)}",
@@ -175,7 +175,7 @@ def carregar_clientes_do_bigquery(
             "canal_preferido": canal,
             "historico_rotativo_12m": meses_neg,
             "objetivo_declarado": objetivo,
-            "perfil_investidor": perfil_investidor_sintetico(f"C{idx+3:03d}"),
+            "perfil_investidor": perfil_investidor_sintetico(f"C{idx+5:03d}"),
             "limite_total": round(max(fatura_val * 1.5, renda * 0.8), 2),
             "fatura": {
                 "valor_total": fatura_val,

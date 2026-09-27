@@ -12,7 +12,7 @@
 * **Latência de Decisão (Portão de Risco)**: < 15ms (100% em memória / código Python determinístico).
 * **Tempo de Resposta Conversacional (P95)**: < 1.800ms com streaming usando Gemini 1.5 Flash.
 * **Custo de Token (FinOps)**: Redução de 80% do tráfego conversacional executando pré-cálculos, projeções e simulações financeiras em código puro antes de invocar o LLM.
-* **Cobertura de Testes**: 100% dos fluxos de autorização, portão de risco e simulações financeiras cobertos por testes unitários determinísticos sem dependência de chaves de API externas.
+* **Cobertura de Testes**: autorização, portão de risco e simulações financeiras cobertos por 156 testes determinísticos, sem dependência de chaves de API externas.
 
 ---
 
@@ -151,7 +151,7 @@ class PortaoRisco:
         Retorna (autorizado, justificativa_regulatoria).
         """
         if projecao.saldo_atual < 0:
-            return False, "BLOQUEIO_CVM: Cliente com saldo devedor em conta corrente."
+            return False, "BLOQUEIO_SALDO_DEVEDOR: Cliente com saldo devedor em conta corrente."
             
         if projecao.regime in (RegimeCliente.DEFICIT_CRITICO, RegimeCliente.DEFICIT_PREVISTO):
             return False, "BLOQUEIO_SUITABILITY: Risco de gap de caixa nos próximos 30 dias."
@@ -180,7 +180,7 @@ Se a data atual estiver entre o dia 1 e o dia 7 do mês:
 * Apenas o montante excedente é oferecido para aplicação.
 
 Se a data for posterior ao dia 8:
-* O sistema programa o **resgate automático (*auto-unwind*)** para **D-1** do vencimento da fatura do cartão.
+* Como o CDB tem liquidez diária, o sistema **sugere o resgate** antes do maior débito do mês (fatura ou financiamento). O agendamento automático do resgate fica como evolução; hoje o cliente resgata com um toque.
 
 ---
 

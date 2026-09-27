@@ -50,6 +50,8 @@ class ProjecaoCaixa30d(BaseModel):
     data_proximo_grande_debito: str | None = None
     valor_proximo_grande_debito: float = 0.0
     dias_ate_proximo_debito: int | None = None
+    perfil_investidor: str | None = None      # conservador | moderado | arrojado
+    perfil_investidor_valido: bool = False    # respondido e dentro da validade
 
 
 class CotacaoInvestimento(BaseModel):

@@ -135,7 +135,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
         simulacao_parc_3x = STORE.cotar_parcelamento(cid, 3)
 
     # Definição do Smart Card Proativo (Action-First)
-    if proj.regime.value == "oportunidade_liquidez":
+    if aut_inv:
         rend_mes = simulacao_inv["rendimento_liquido"] if simulacao_inv else 189.07
         smart_card = {
             "tipo": "OPORTUNIDADE_CDB",
@@ -144,6 +144,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
             "titulo": f"Você tem {formatar_moeda(proj.saldo_livre_efetivo)} sem render na conta corrente",
             "descricao": (
                 f"Calculamos suas despesas até o próximo ciclo (compromissos fixos e fatura protegidos pelo nosso colchão de {formatar_moeda(proj.colchao_minimo_obrigatorio)}). "
+                f"Oferecemos só o produto mais conservador: liquidez diária e garantia do FGC, adequado ao seu perfil ({proj.perfil_investidor}). "
                 f"Sua liquidez ociosa pode render {formatar_moeda(rend_mes)} líquidos por mês no CDB Itaú (100% CDI)."
             ),
             "acao_primaria_texto": f"Aplicar {formatar_moeda(proj.saldo_livre_efetivo)} com iToken",
@@ -160,6 +161,25 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
             "destaque_valor": f"+{formatar_moeda(rend_mes)}/mês",
             "destaque_label": "Rendimento Líquido Estimado",
             "cor_tema": "laranja",
+        }
+    elif proj.regime.value == "oportunidade_liquidez":
+        # tem sobra, mas o perfil de investidor está ausente ou vencido: sem oferta até atualizar
+        smart_card = {
+            "tipo": "ATUALIZAR_PERFIL",
+            "icone": "📋",
+            "tag": "Perfil de Investidor",
+            "titulo": "Atualize seu perfil de investidor para fazer seu dinheiro render",
+            "descricao": (
+                f"Você tem {formatar_moeda(proj.saldo_livre_efetivo)} além do necessário para as contas do mês. "
+                "Antes de sugerir qualquer investimento, precisamos do seu perfil de investidor em dia."
+            ),
+            "acao_primaria_texto": "Entender com a IA.Í",
+            "acao_primaria_payload": {"tipo": "perfil"},
+            "acao_secundaria_texto": "Consultar IA.Í",
+            "acao_secundaria_prompt": "Por que preciso atualizar meu perfil de investidor antes de investir?",
+            "destaque_valor": formatar_moeda(proj.saldo_livre_efetivo),
+            "destaque_label": "Disponível após as contas do mês",
+            "cor_tema": "azul",
         }
     elif proj.regime.value in ("deficit_previsto", "deficit_critico"):
         if proj.regime.value == "deficit_critico":

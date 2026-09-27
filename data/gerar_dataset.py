@@ -18,6 +18,9 @@ import random
 from pathlib import Path
 
 HOJE = "2026-09-21"
+# perfil de investidor (questionário de adequação): o CDB de liquidez diária serve a todos os perfis,
+# mas só é oferecido a quem tem perfil respondido e dentro da validade
+PERFIS = ["conservador", "moderado", "arrojado"]
 SAIDA = Path(__file__).resolve().parent / "clientes.json"
 
 NOMES = [
@@ -65,6 +68,22 @@ def _transacoes(rng: random.Random, renda: float) -> list[dict]:
     return sorted(out, key=lambda t: t["dias_atras"])
 
 
+def perfil_investidor_sintetico(cliente_id: str) -> dict | None:
+    """Perfil fictício e determinístico por cliente.
+
+    Usa um sorteio separado, semeado pelo id, para não mudar os demais dados já gerados.
+    Cerca de 15% sem perfil, 15% com perfil vencido e 70% com perfil válido.
+    """
+    r = random.Random(f"perfil-{cliente_id}")
+    sorteio = r.random()
+    if sorteio < 0.15:
+        return None
+    perfil = r.choices(PERFIS, [0.5, 0.35, 0.15])[0]
+    ano = 2026 if sorteio < 0.30 else 2027  # vencido antes de hoje ou válido até 2027
+    mes = r.randint(1, 8) if ano == 2026 else r.randint(1, 12)
+    return {"perfil": perfil, "valido_ate": f"{ano}-{mes:02d}-{r.randint(1, 28):02d}"}
+
+
 def gerar_cliente(rng: random.Random, i: int) -> dict:
     renda = _renda(rng)
     letramento = rng.choices(["baixo", "medio", "alto"], [0.55, 0.30, 0.15])[0]
@@ -86,6 +105,7 @@ def gerar_cliente(rng: random.Random, i: int) -> dict:
         "canal_preferido": rng.choice(["app", "whatsapp", "app", "voz"]),
         "historico_rotativo_12m": rng.choices([0, 1, 2, 3, 5], [0.45, 0.2, 0.15, 0.1, 0.1])[0],
         "objetivo_declarado": rng.choice([None, "sair do vermelho", "reserva de emergência", "trocar de carro", "viajar"]),
+        "perfil_investidor": perfil_investidor_sintetico(f"C{i:03d}"),
         "limite_total": round(max(fatura * rng.uniform(1.1, 2.5), 500), 2),
         "fatura": {"valor_total": fatura, "dias_ate_vencimento": dias_venc, "itens": _itens_fatura(rng, fatura), "status": "aberta"},
         "entradas_previstas": [
@@ -103,7 +123,7 @@ def gerar_cliente(rng: random.Random, i: int) -> dict:
 def personas_demo() -> list[dict]:
     """Quatro casos representativos calibrados no BigQuery (extrato_sintetico)."""
     ana = {
-        "cliente_id": "C001", "uuid": "3f3f7877-71fd-4073-b0a8-692b105609d8", "alias_id": "3f3f7877-71fd-4073-b0a8-692b105609d8",
+        "cliente_id": "C001", "perfil_investidor": None, "uuid": "3f3f7877-71fd-4073-b0a8-692b105609d8", "alias_id": "3f3f7877-71fd-4073-b0a8-692b105609d8",
         "nome": "Ana Souza", "idade": 34, "renda_mensal": 3200.0,
         "saldo_conta": 610.0, "score": 540, "negativado": False, "letramento_financeiro": "baixo",
         "acessibilidade": None, "canal_preferido": "whatsapp", "historico_rotativo_12m": 2,
@@ -121,7 +141,7 @@ def personas_demo() -> list[dict]:
                            {"dias_atras": 6, "categoria": "roupas", "valor": 390.0, "meio": "cartao"}],
     }
     bruno = {
-        "cliente_id": "C002", "uuid": "3df4aa25-75c6-4a76-af42-40f761ada3fe", "alias_id": "3df4aa25-75c6-4a76-af42-40f761ada3fe",
+        "cliente_id": "C002", "perfil_investidor": {"perfil": "moderado", "valido_ate": "2026-03-10"}, "uuid": "3df4aa25-75c6-4a76-af42-40f761ada3fe", "alias_id": "3df4aa25-75c6-4a76-af42-40f761ada3fe",
         "nome": "Bruno Lima", "idade": 41, "renda_mensal": 9800.0,
         "saldo_conta": 7400.0, "score": 810, "negativado": False, "letramento_financeiro": "alto",
         "acessibilidade": None, "canal_preferido": "app", "historico_rotativo_12m": 0,
@@ -134,7 +154,7 @@ def personas_demo() -> list[dict]:
         "transacoes_30d": [{"dias_atras": 3, "categoria": "lazer", "valor": 800.0, "meio": "cartao"}],
     }
     carla = {
-        "cliente_id": "C003", "uuid": "16c787c7-9510-41fa-a10c-7183c7d12008", "alias_id": "16c787c7-9510-41fa-a10c-7183c7d12008",
+        "cliente_id": "C003", "perfil_investidor": None, "uuid": "16c787c7-9510-41fa-a10c-7183c7d12008", "alias_id": "16c787c7-9510-41fa-a10c-7183c7d12008",
         "nome": "Carla Pereira", "idade": 58, "renda_mensal": 2100.0,
         "saldo_conta": -120.0, "score": 380, "negativado": True, "letramento_financeiro": "baixo",
         "acessibilidade": "baixa_visao", "canal_preferido": "voz", "historico_rotativo_12m": 5,
@@ -148,7 +168,7 @@ def personas_demo() -> list[dict]:
         "transacoes_30d": [{"dias_atras": 2, "categoria": "farmácia", "valor": 340.0, "meio": "cartao"}],
     }
     diego = {
-        "cliente_id": "C004", "uuid": "fe52b305-9f7c-4e06-8bfe-7950f882fdfa", "alias_id": "fe52b305-9f7c-4e06-8bfe-7950f882fdfa",
+        "cliente_id": "C004", "perfil_investidor": {"perfil": "moderado", "valido_ate": "2027-05-14"}, "uuid": "fe52b305-9f7c-4e06-8bfe-7950f882fdfa", "alias_id": "fe52b305-9f7c-4e06-8bfe-7950f882fdfa",
         "nome": "Diego Takahashi", "idade": 38, "renda_mensal": 13000.0,
         "saldo_conta": 38250.0, "score": 920, "negativado": False, "letramento_financeiro": "alto",
         "acessibilidade": None, "canal_preferido": "app", "historico_rotativo_12m": 0,

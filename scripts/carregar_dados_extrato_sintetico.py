@@ -26,6 +26,8 @@ sys.path.insert(0, str(RAIZ))
 
 from google.cloud import bigquery
 
+from data.gerar_dataset import perfil_investidor_sintetico
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -173,6 +175,7 @@ def carregar_clientes_do_bigquery(
             "canal_preferido": canal,
             "historico_rotativo_12m": meses_neg,
             "objetivo_declarado": objetivo,
+            "perfil_investidor": perfil_investidor_sintetico(f"C{idx+3:03d}"),
             "limite_total": round(max(fatura_val * 1.5, renda * 0.8), 2),
             "fatura": {
                 "valor_total": fatura_val,

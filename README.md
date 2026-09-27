@@ -2,7 +2,7 @@
 
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Google ADK 2.x](https://img.shields.io/badge/Google_ADK-2.x-orange.svg)](https://github.com/google/agent-development-kit)
-[![Tests](https://img.shields.io/badge/tests-150%20passed-brightgreen.svg)](https://pytest.org)
+[![Tests](https://img.shields.io/badge/tests-156%20passed-brightgreen.svg)](https://pytest.org)
 [![Compliance](https://img.shields.io/badge/alinhado%20a-LGPD%20%7C%20CVM%2030%20%7C%20Lei%2014.181-darkblue.svg)](#política-de-ia-responsável-e-guardrails)
 
 > **Solução desenvolvida para a Batalha de Agentes (Itaú Unibanco + Google).**  
@@ -23,7 +23,8 @@ A maioria dos "robôs de investimento" do mercado falha porque é **passiva** (d
 O **Itaú Gestor de Liquidez com IA** inova ao operar em ciclo fechado:
 - **Proatividade Zero-Friction:** Analisa o fluxo de caixa dos próximos 30 dias em segundo plano.
 - **Colchão de Segurança Dinâmico:** Reserva e blinda os valores exatos de despesas essenciais e faturas até o próximo ciclo salarial.
-- **Varredura de Liquidez (Cash Sweeper):** Sugere a aplicação do excedente ocioso no **CDB Itaú Liquidez Diária (100% CDI)** com **1 toque via iToken**.
+- **Varredura de Liquidez (Cash Sweeper):** Sugere a aplicação do excedente no **CDB Itaú Liquidez Diária (100% CDI)** com **1 toque via iToken**.
+- **Só o produto mais conservador, de propósito:** o único investimento oferecido é o CDB de liquidez diária com garantia do FGC, adequado a qualquer perfil de investidor. O dinheiro vem da sobra da conta corrente e o cliente pode precisar dele no mês seguinte: liquidez diária é requisito do produto, não limitação. Mesmo assim, só há oferta para quem tem **perfil de investidor respondido e dentro da validade**.
 - **Portão de Risco Ético (Zero-LLM):** Se o cliente estiver em aperto ou endividamento, o sistema **bloqueia investimentos** pela política de suitability (alinhada à CVM 30 e à Lei 14.181) e aciona o **Escudo Anti-Rotativo**, economizando até R$ 375 em juros na fatura.
 
 ---
@@ -84,6 +85,7 @@ O Itaú possui diretrizes inegociáveis de segurança e ética algorítmica. O s
 
 ### Barreira 2: Before-Tool (Suitability e Consentimento)
 - **Zero-LLM Hard Gates:** Nenhuma aplicação financeira pode ser sugerida, cotada ou executada se o cliente possuir saldo negativo na conta corrente, histórico de rotativo recente ou déficit projetado. O valor aplicado nunca invade o colchão: a trava roda na cotação, que o core recalcula antes de debitar, então vale para o agente, o MCP e o app. É política interna de suitability, inspirada na Resolução CVM 30 e na Lei 14.181.
+- **Adequação ao perfil de investidor:** a oferta exige perfil de investidor (conservador, moderado ou arrojado) respondido e dentro da validade. Sem perfil válido, o app pede a atualização do questionário em vez de ofertar, e a aplicação é recusada também na execução.
 - **Consentimento Explícito (LGPD Art. 7º):** Avisos proativos e canais de push exigem base legal válida e honram imediatamente solicitações de oposição (*Opt-out*).
 
 ### Barreira 3: Separação Matemática & Execução Transacional
@@ -106,7 +108,7 @@ O Itaú possui diretrizes inegociáveis de segurança e ética algorítmica. O s
 │   └── tools/                 # Ferramentas determinísticas conectadas ao Core
 ├── gestor_caixa/              # Módulo do Gestor de Liquidez & Investimento
 │   ├── motor_projecao.py      # Cálculo determinístico do colchão de 30 dias
-│   ├── portao_risco.py        # Hard Gate de Suitability Zero-LLM (política interna)
+│   ├── portao_risco.py        # Regras de elegibilidade: situação financeira + perfil de investidor
 │   ├── simulador_liquidez.py  # Matemática do CDB 100% CDI, IOF e IR
 │   └── esquemas.py            # Contratos de dados Pydantic v2
 ├── mock_core/                 # Simulação do Core Bancário e Protocolo MCP
@@ -120,7 +122,7 @@ O Itaú possui diretrizes inegociáveis de segurança e ética algorítmica. O s
 │   ├── RAI_E_GUARDRAILS.md    # Política de IA Responsável e Compliance
 │   ├── BUSINESS_CASE_E_DADOS.md # Estudo empírico BigQuery e Unit Economics
 │   └── ROTEIRO_DEMO_PITCH.md  # Script de apresentação para a banca (3 min)
-└── tests/                     # 150 testes automatizados (100% passing)
+└── tests/                     # 156 testes automatizados (100% passing)
 ```
 
 ---
@@ -148,7 +150,7 @@ O projeto é 100% gerenciado via `uv` para reprodutibilidade determinística e i
    # Adicione sua GOOGLE_API_KEY (ou execute no modo demo sem necessidade de chave)
    ```
 
-3. **Rodar a suíte de testes (150 testes sem dependência de LLM externa):**
+3. **Rodar a suíte de testes (156 testes sem dependência de LLM externa):**
    ```bash
    uv run pytest
    ```
@@ -167,7 +169,7 @@ O projeto é 100% gerenciado via `uv` para reprodutibilidade determinística e i
 | :--- | :--- |
 | **Business Thinking (30%)** | Baseado na base do evento (1.000 clientes, 467.585 transações): metade da base gasta mais do que ganha e precisa evitar juros; a outra metade tem sobra parada que pode render. |
 | **Design & Experiência (20%)** | Mobile UX de produção: elimina interfaces engessadas de chatbot puro; entrega **Smart Cards proativos nativos com execução em 1 toque**. |
-| **Engenharia & Dados (50%)** | Google ADK 2.x nativo, **150 testes automatizados passando**, separação Zero-LLM para matemática financeira, iToken 2-Phase Commit com HMAC-SHA256 e travas alinhadas à CVM 30, à LGPD e à Lei 14.181. |
+| **Engenharia & Dados (50%)** | Google ADK 2.x nativo, **156 testes automatizados passando**, separação Zero-LLM para matemática financeira, iToken 2-Phase Commit com HMAC-SHA256 e travas alinhadas à CVM 30, à LGPD e à Lei 14.181. |
 
 ---
 

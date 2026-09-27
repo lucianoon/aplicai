@@ -76,6 +76,8 @@ def test_portao_risco_autoriza_cliente_com_capital_ocioso():
         total_compromissos_fixos=5000.0,
         saldo_livre_efetivo=15000.0,
         regime=RegimeCliente.OPORTUNIDADE_LIQUIDEZ,
+        perfil_investidor="conservador",
+        perfil_investidor_valido=True,
     )
     autorizado, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
     assert autorizado
@@ -103,6 +105,7 @@ def test_autorizacao_e_execucao_aplicar_cdb():
     perfil = STORE.get_perfil(cliente_id)
     # Garante saldo suficiente em C001 para o teste
     STORE._cliente(cliente_id)["saldo_conta"] = 15000.0
+    STORE._cliente(cliente_id)["perfil_investidor"] = {"perfil": "conservador", "valido_ate": "2027-01-31"}
 
     args = {"valor": 5000.0, "dias_permanencia": 30}
     q = cotar(STORE, "aplicar_cdb", cliente_id, args)
@@ -220,3 +223,50 @@ def test_regime_neutro_nao_e_elegivel():
     assert 1000.0 <= proj.saldo_livre_efetivo < 2000.0
     autorizado, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
     assert not autorizado and "BLOQUEIO_COLCHAO" in motivo
+
+
+def _com_sobra(perfil):
+    """Cliente com R$ 30 mil e poucas contas: só o perfil decide se pode investir."""
+    return {
+        "saidas_previstas": [{"descricao": "aluguel", "valor": 2000.0, "dia_offset": 5}],
+        "perfil_investidor": perfil,
+    }
+
+
+def test_sem_perfil_de_investidor_nao_ha_oferta():
+    proj = MotorProjecaoCaixa.projetar("C_TEST", 30000.0, 10000.0, _com_sobra(None), hoje=date(2026, 9, 21))
+    assert proj.regime == RegimeCliente.OPORTUNIDADE_LIQUIDEZ and not proj.perfil_investidor_valido
+    autorizado, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
+    assert not autorizado and "BLOQUEIO_PERFIL_INVESTIDOR" in motivo
+
+
+def test_perfil_vencido_nao_ha_oferta():
+    perfil = {"perfil": "moderado", "valido_ate": "2026-09-20"}  # venceu ontem
+    proj = MotorProjecaoCaixa.projetar("C_TEST", 30000.0, 10000.0, _com_sobra(perfil), hoje=date(2026, 9, 21))
+    autorizado, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
+    assert not autorizado and "BLOQUEIO_PERFIL_INVESTIDOR" in motivo
+
+
+def test_produto_conservador_serve_a_qualquer_perfil_valido():
+    for perfil in ("conservador", "moderado", "arrojado"):
+        dados = _com_sobra({"perfil": perfil, "valido_ate": "2026-09-21"})  # vale até hoje
+        proj = MotorProjecaoCaixa.projetar("C_TEST", 30000.0, 10000.0, dados, hoje=date(2026, 9, 21))
+        assert PortaoRisco.avaliar_elegibilidade_investimento(proj)[0], perfil
+
+
+def test_sem_perfil_a_aplicacao_e_recusada_na_execucao():
+    """A trava vale no caminho de execução, não só na oferta."""
+    c = STORE._cliente("C004")
+    c["perfil_investidor"] = None
+    with pytest.raises(ValueError, match="BLOQUEIO_PERFIL_INVESTIDOR"):
+        cotar(STORE, "aplicar_cdb", "C004", {"valor": 1000.0})
+
+
+def test_perfis_sinteticos_sao_deterministicos_e_variados():
+    from data.gerar_dataset import perfil_investidor_sintetico
+
+    perfis = [perfil_investidor_sintetico(f"C{i:03d}") for i in range(5, 205)]
+    assert perfis == [perfil_investidor_sintetico(f"C{i:03d}") for i in range(5, 205)]
+    assert any(p is None for p in perfis)
+    assert any(p and p["valido_ate"] < "2026-09-21" for p in perfis)
+    assert sum(1 for p in perfis if p and p["valido_ate"] >= "2026-09-21") > len(perfis) / 2

@@ -88,6 +88,7 @@ class MotorProjecaoCaixa:
         hoje: date | None = None,
     ) -> ProjecaoCaixa30d:
         """Gera o diagnóstico completo de liquidez e colchão dinâmico."""
+        hoje = hoje or date.today()
         compromissos = cls.extrair_compromissos_cliente(cliente_raw, hoje)
         total_fixos = round(sum(c.valor_estimado for c in compromissos), 2)
         margem_variavel = round(renda_mensal * MARGEM_VARIAVEL_PCT_RENDA, 2)
@@ -100,6 +101,7 @@ class MotorProjecaoCaixa:
         # Débito de referência para o resgate programado: o maior da janela (empate: o mais próximo)
         maior = min(compromissos, key=lambda c: (-c.valor_estimado, c.dias_ate_vencimento), default=None)
 
+        perfil = cliente_raw.get("perfil_investidor") or {}
         historico_rotativo = cliente_raw.get("historico_rotativo_12m", 0)
         negativado = cliente_raw.get("negativado", False)
 
@@ -125,4 +127,6 @@ class MotorProjecaoCaixa:
             data_proximo_grande_debito=f"{maior.descricao} (Dia {maior.dia_vencimento})" if maior else None,
             valor_proximo_grande_debito=maior.valor_estimado if maior else 0.0,
             dias_ate_proximo_debito=maior.dias_ate_vencimento if maior else None,
+            perfil_investidor=perfil.get("perfil"),
+            perfil_investidor_valido=bool(perfil.get("perfil")) and perfil.get("valido_ate", "") >= hoje.isoformat(),
         )

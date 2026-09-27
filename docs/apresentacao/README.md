@@ -27,7 +27,7 @@ $env:COPILOTO_MODEL = "demo"; uv run python -m web.servidor   # sem chave e sem 
 ```
 
 Abra http://127.0.0.1:8080. Para usar o Gemini, crie o `.env` na hora com a chave do evento; a chave
-nunca vai para o GitHub. O roteiro da fala está em `docs/roteiro_demo.md`.
+nunca vai para o GitHub. O roteiro da fala está em `docs/ROTEIRO_DEMO_PITCH.md`.
 
 ## Refazer os prints
 

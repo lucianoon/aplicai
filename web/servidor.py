@@ -83,15 +83,15 @@ PERSONAS = {
     },
     "C004": {
         "nome": "Diego Takahashi",
-        "tag": "Poupador & Planejamento",
-        "badge": "Controle e Organização",
+        "tag": "Investimento Agêntico (Cash Sweeper)",
+        "badge": "R$ 28.550 Ociosos a 0%",
         "cor": "sucesso",
         "bigquery_id": "fe52b305-9f7c-4e06-8bfe-7950f882fdfa",
-        "resumo": "0 meses no negativo, saldo de R$ 38.250,00. Fatura de R$ 4.250 em aberto para categorização inteligente de gastos.",
+        "resumo": "Saldo de R$ 38.250,00 na conta corrente rendendo 0%. O agente blindou a Reserva de Contas de R$ 9.700,00 para proteger o mês e identificou R$ 28.550,00 de excedente para aplicação imediata em CDB 100% CDI.",
         "fatura_formatada": "R$ 4.250,00",
         "saldo_formatado": "R$ 38.250,00",
-        "vencimento_texto": "Vence em 8 dias",
-        "cenario": "Otimização de gastos e reserva financeira",
+        "vencimento_texto": "Vence em 8 dias (reserva protegida)",
+        "cenario": "Varredura de Liquidez e Rentabilização Autônoma",
     },
 }
 
@@ -140,12 +140,12 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
         smart_card = {
             "tipo": "OPORTUNIDADE_CDB",
             "icone": "⚡",
-            "tag": "Oportunidade de Liquidez",
-            "titulo": f"Você tem {formatar_moeda(proj.saldo_livre_efetivo)} sem render na conta corrente",
+            "tag": "Investimento Agêntico · Cash Sweeper",
+            "titulo": f"Varredura de Liquidez: {formatar_moeda(proj.saldo_livre_efetivo)} ociosos na conta corrente",
             "descricao": (
-                f"Calculamos suas despesas até o próximo ciclo (compromissos fixos e fatura protegidos pelo nosso colchão de {formatar_moeda(proj.colchao_minimo_obrigatorio)}). "
+                f"Calculamos suas despesas até o próximo ciclo (compromissos fixos e fatura protegidos pela nossa Reserva de Contas de {formatar_moeda(proj.colchao_minimo_obrigatorio)}). "
                 f"Oferecemos só o produto mais conservador: liquidez diária e garantia do FGC, adequado ao seu perfil ({proj.perfil_investidor}). "
-                f"Sua liquidez ociosa pode render {formatar_moeda(rend_mes)} líquidos por mês no CDB Itaú (100% CDI)."
+                f"Sua liquidez ociosa pode render {formatar_moeda(rend_mes)} líquidos por mês no CDB Itaú (100% CDI com liquidez diária)."
             ),
             "acao_primaria_texto": f"Aplicar {formatar_moeda(proj.saldo_livre_efetivo)} com iToken",
             "acao_primaria_payload": {
@@ -153,13 +153,13 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                 "valor": proj.saldo_livre_efetivo,
                 "dias_permanencia": 30,
             },
-            "acao_secundaria_texto": "Tirar dúvidas com a IA.Í",
+            "acao_secundaria_texto": "Explicar Investimento Agêntico com a IA.Í",
             "acao_secundaria_prompt": (
-                f"Por que você recomendou aplicar {formatar_moeda(proj.saldo_livre_efetivo)} no CDB "
-                f"e deixou {formatar_moeda(proj.colchao_minimo_obrigatorio)} de colchão de segurança?"
+                f"Como o agente de investimento calculou a reserva blindada de {formatar_moeda(proj.colchao_minimo_obrigatorio)} "
+                f"e por que recomendou aplicar {formatar_moeda(proj.saldo_livre_efetivo)} no CDB de liquidez diária?"
             ),
-            "destaque_valor": f"+{formatar_moeda(rend_mes)}/mês",
-            "destaque_label": "Rendimento Líquido Estimado",
+            "destaque_valor": f"+{formatar_moeda(rend_mes)}/mês líquidos",
+            "destaque_label": "Rendimento Agêntico Estimado",
             "cor_tema": "laranja",
         }
     elif proj.regime.value == "oportunidade_liquidez":
@@ -223,20 +223,39 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
                 "cor_tema": "amarelo",
             }
     else:
-        smart_card = {
-            "tipo": "EQUILIBRIO_FINANCEIRO",
-            "icone": "✨",
-            "tag": "Finanças em Dia",
-            "titulo": "Suas contas e fatura estão equilibradas neste ciclo",
-            "descricao": "Nenhum risco de rotativo identificado e fluxo futuro coberto pelos recebimentos previstos.",
-            "acao_primaria_texto": "Ver Extrato Detalhado",
-            "acao_primaria_payload": {"tipo": "extrato"},
-            "acao_secundaria_texto": "Consultar IA.Í",
-            "acao_secundaria_prompt": "Como posso otimizar meus gastos e planejar minha reserva financeira?",
-            "destaque_valor": "100%",
-            "destaque_label": "Controle Financeiro",
-            "cor_tema": "verde",
-        }
+        if float(raw.get("saldo_investido", 0.0)) > 0:
+            smart_card = {
+                "tipo": "CARTEIRA_RENTABILIZADA",
+                "icone": "🌱",
+                "tag": "Investimento Agêntico Ativo",
+                "titulo": f"Patrimônio Otimizado: {formatar_moeda(float(raw.get('saldo_investido', 0.0)))} rendendo 100% CDI",
+                "descricao": (
+                    f"Sua liquidez ociosa está alocada no CDB Itaú com rendimento de 100% CDI e resgate diário. "
+                    f"Sua Reserva para Contas ({formatar_moeda(proj.colchao_minimo_obrigatorio)}) garante a quitação de todos os débitos do mês."
+                ),
+                "acao_primaria_texto": "Ver Extrato Detalhado",
+                "acao_primaria_payload": {"tipo": "extrato"},
+                "acao_secundaria_texto": "Consultar IA.Í",
+                "acao_secundaria_prompt": "Quanto meus investimentos estão rendendo hoje e quando posso resgatar se precisar?",
+                "destaque_valor": "100% CDI",
+                "destaque_label": "Rentabilidade D+0",
+                "cor_tema": "verde",
+            }
+        else:
+            smart_card = {
+                "tipo": "EQUILIBRIO_FINANCEIRO",
+                "icone": "✨",
+                "tag": "Finanças em Dia",
+                "titulo": "Suas contas e fatura estão equilibradas neste ciclo",
+                "descricao": "Nenhum risco de rotativo identificado e fluxo futuro coberto pelos recebimentos previstos.",
+                "acao_primaria_texto": "Ver Extrato Detalhado",
+                "acao_primaria_payload": {"tipo": "extrato"},
+                "acao_secundaria_texto": "Consultar IA.Í",
+                "acao_secundaria_prompt": "Como posso otimizar meus gastos e planejar minha reserva financeira?",
+                "destaque_valor": "100%",
+                "destaque_label": "Controle Financeiro",
+                "cor_tema": "verde",
+            }
 
     return {
         "regime": proj.regime.value,

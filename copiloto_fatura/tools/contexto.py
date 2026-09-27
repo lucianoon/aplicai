@@ -380,7 +380,7 @@ def consultar_extrato_detalhado(limite: int = 10, tool_context: ToolContext = No
 
 
 def analisar_caixa_e_liquidez(tool_context: ToolContext = None) -> dict:
-    """Diagnóstico preditivo de fluxo de caixa de 30 dias, colchão de segurança e capital ocioso.
+    """Diagnóstico preditivo de fluxo de caixa de 30 dias, reserva blindada de compromissos e capital ocioso.
 
     Identifica compromissos contratuais (financiamento habitacional, mensalidade escolar, condomínio, fatura)
     e calcula o capital ocioso disponível para aplicação em CDB Liquidez Diária, aplicando as travas

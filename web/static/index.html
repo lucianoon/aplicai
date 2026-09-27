@@ -404,6 +404,14 @@
     </button>
   </header>
 
+  <div style="background:linear-gradient(90deg, #0a1f3d 0%, #0d284f 100%); padding:6px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(236,112,0,0.35);">
+    <span style="font-size:11px; font-weight:700; color:#ff9f43; display:flex; align-items:center; gap:6px;">
+      <span style="width:8px; height:8px; background:#10b981; border-radius:50%; display:inline-block; box-shadow:0 0 8px #10b981;"></span>
+      Investimento Agêntico Ativo
+    </span>
+    <span style="font-size:10.5px; color:#cbd5e1; font-weight:600;">Cash Sweeper 30d</span>
+  </div>
+
   <!-- Scroll Principal -->
   <main class="app-scroll-body" id="app-body">
 
@@ -427,6 +435,36 @@
           <b id="txt-limite-lis">R$ 10.000,00</b>
         </div>
       </div>
+
+      <!-- Barra Visual de Alocação Inteligente de Liquidez -->
+      <div class="sweep-alloc-box" id="sweep-alloc-box" style="margin-top:14px; padding:12px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:11px; font-weight:800; color:#0f172a; text-transform:uppercase; letter-spacing:0.5px;">🤖 Alocação Inteligente de Caixa</span>
+            <span style="background:#ecfdf5; color:#065f46; font-size:9.5px; padding:2px 7px; border-radius:10px; border:1px solid #a7f3d0; font-weight:700;">Cash Sweeper</span>
+          </div>
+          <button type="button" id="btn-quick-sweep" style="background:var(--itau-laranja); color:#fff; border:none; border-radius:8px; padding:6px 12px; font-size:11.5px; font-weight:700; cursor:pointer; box-shadow:0 2px 6px rgba(236,112,0,0.25); display:inline-flex; align-items:center; gap:4px; transition:transform 0.15s ease;">
+            ⚡ Investir Excedente
+          </button>
+        </div>
+
+        <!-- Barra visual de progresso proporcional -->
+        <div style="height:10px; width:100%; background:#e2e8f0; border-radius:6px; overflow:hidden; display:flex;" title="Distribuição de liquidez planejada">
+          <div id="bar-reserva-contas" style="width:25.3%; background:linear-gradient(90deg, #1e3a8a, #2563eb); transition:width 0.4s ease;" title="Reserva de Contas (Blindada)"></div>
+          <div id="bar-excedente-investir" style="width:74.7%; background:linear-gradient(90deg, #10b981, #059669); transition:width 0.4s ease;" title="Disponível para Investir"></div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
+          <div style="display:flex; align-items:center; gap:5px;">
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#2563eb;"></span>
+            <span style="color:var(--itau-texto-secundario);">Reserva Contas: <b id="txt-colchao-blindado" style="color:var(--itau-texto-primario);">R$ 9.700,00</b> <span id="txt-pct-reserva" style="color:#64748b; font-size:10px;">(25%)</span></span>
+          </div>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+            <span style="color:var(--itau-texto-secundario);">Disponível p/ Investir: <b id="txt-excedente-investir" style="color:#047857;">R$ 28.550,00</b> <span id="txt-pct-livre" style="color:#047857; font-size:10px; font-weight:700;">(75%)</span></span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Card 2: SMART CARD PROATIVO DO GESTOR DE CAIXA -->
@@ -439,7 +477,7 @@
         Você tem R$ 28.550,00 parados na conta rendendo 0%
       </div>
       <div class="smart-card-desc" id="smart-card-desc">
-        Identificamos que suas contas fixas e sua fatura de cartão estão protegidas pelo colchão de segurança de R$ 9.700,00. 
+        Identificamos que suas contas fixas e sua fatura de cartão estão 100% protegidas pela Reserva para Contas do Mês de R$ 9.700,00. 
         Sua liquidez ociosa pode render R$ 189,07 líquidos por mês no CDB Itaú Liquidez Diária.
       </div>
       <div class="smart-destaque-box" id="smart-card-destaque">
@@ -465,7 +503,7 @@
       <div class="valor-fatura-row" id="txt-valor-fatura">R$ 4.250,00</div>
       <div class="fatura-detalhe-linha">
         <span>Status da fatura: <b id="txt-status-fatura" style="color:var(--itau-texto-primario);">Aberta</b></span>
-        <span>Melhor dia de compra: <b>Dia 21</b></span>
+        <span id="txt-status-protecao-fatura" style="color:#027a48; font-weight:600; font-size:11px;">🛡️ Reserva Blindada para o Mês</span>
       </div>
       <div style="display:flex; gap:8px;">
         <button type="button" class="btn-acao-smart-secundaria" style="flex:1;" id="btn-pagar-fatura-home">
@@ -632,6 +670,23 @@ async function carregarConta(clienteId) {
     $("txt-saldo-corrente").textContent = dados.saldo_formatado;
     $("txt-saldo-investido").textContent = dados.total_investido_formatado;
     $("txt-limite-lis").textContent = dados.limite_cheque_especial_formatado;
+
+    // Atualiza Caixa e Varredura Agêntica
+    if (dados.diagnostico) {
+      const colchao = dados.diagnostico.colchao_minimo_obrigatorio || 9700.0;
+      const livre = dados.diagnostico.saldo_livre_efetivo || 0.0;
+      const total = colchao + livre;
+      const pctReserva = total > 0 ? Math.round((colchao / total) * 100) : 0;
+      const pctLivre = total > 0 ? (100 - pctReserva) : 0;
+
+      if ($("txt-colchao-blindado")) $("txt-colchao-blindado").textContent = formatarBRL(colchao);
+      if ($("txt-excedente-investir")) $("txt-excedente-investir").textContent = formatarBRL(livre);
+      if ($("txt-pct-reserva")) $("txt-pct-reserva").textContent = `(${pctReserva}%)`;
+      if ($("txt-pct-livre")) $("txt-pct-livre").textContent = `(${pctLivre}%)`;
+      if ($("bar-reserva-contas")) $("bar-reserva-contas").style.width = `${pctReserva}%`;
+      if ($("bar-excedente-investir")) $("bar-excedente-investir").style.width = `${pctLivre}%`;
+      if ($("sweep-alloc-box")) $("sweep-alloc-box").style.display = (dados.diagnostico.elegivel_investimento && livre >= 500) ? "flex" : "none";
+    }
 
     // Atualiza Fatura
     $("txt-valor-fatura").textContent = dados.fatura_formatada;
@@ -821,8 +876,15 @@ async function iniciarSessaoADK(cid, primNome) {
       state: { cliente_id: cid, primeiro_nome: primNome }
     });
     sessaoADK = s.id;
-    $("drawer-msgs").innerHTML = "";
-    adicionarBolha(`Olá, ${escapar(primNome)}! Sou a IA.Í, sua especialista autônoma em gestão de caixa e finanças Itaú. Como posso te apoiar hoje?`, "bot");
+    // Saudação Proativa de Investimento Agêntico ou Proteção
+    if (contaAtiva?.diagnostico?.elegivel_investimento && contaAtiva?.diagnostico?.saldo_livre_efetivo >= 500) {
+      const livre = formatarBRL(contaAtiva.diagnostico.saldo_livre_efetivo);
+      const reserva = formatarBRL(contaAtiva.diagnostico.colchao_minimo_obrigatorio);
+      const rend = contaAtiva?.diagnostico?.simulacao_investimento ? formatarBRL(contaAtiva.diagnostico.simulacao_investimento.rendimento_liquido) : "R$ 189,07";
+      adicionarBolha(`Olá, ${escapar(primNome)}! Sou a IA.Í, seu <b>Agente de Investimento e Liquidez</b>.<br><br>⚡ <b>Oportunidade Detectada:</b> Identifiquei <b>${livre}</b> ociosos na sua conta corrente rendendo 0%.<br><br>Sua <b>Reserva para Contas do Mês (${reserva})</b> já está protegida para cobrir todas as despesas e a fatura dos próximos 30 dias.<br><br>Sua liquidez excedente pode render <b>+${rend} líquidos por mês</b> no CDB Itaú 100% CDI com resgate diário. Deseja aplicar via iToken?`, "bot");
+    } else {
+      adicionarBolha(`Olá, ${escapar(primNome)}! Sou a IA.Í, sua especialista autônoma em gestão de caixa e finanças Itaú. Como posso te apoiar hoje?`, "bot");
+    }
     atualizarSugestoesDrawer();
   } catch (e) {
     console.error("Erro ao iniciar sessão ADK:", e);
@@ -847,13 +909,23 @@ function adicionarChip(texto) {
 function atualizarSugestoesDrawer() {
   const container = $("drawer-sugestoes");
   container.innerHTML = "";
-  const sugestoes = [
-    "Como funciona o colchão de segurança?",
-    "Quanto rende R$ 20 mil no CDB 100% CDI?",
-    "Quais despesas fixas vencem até dia 08?",
-    "Como evitar os juros do rotativo?",
-    "Simular resgate em 15 dias com IOF"
-  ];
+  let sugestoes;
+  if (contaAtiva?.diagnostico?.elegivel_investimento && contaAtiva?.diagnostico?.saldo_livre_efetivo >= 500) {
+    sugestoes = [
+      "⚡ Aplicar excedente no CDB com iToken",
+      "Como o agente calculou a Reserva de Contas?",
+      "Qual o rendimento líquido descontando IOF e IR?",
+      "O que acontece se eu precisar resgatar antes?",
+      "Quais contas estão blindadas na reserva do mês?"
+    ];
+  } else {
+    sugestoes = [
+      "Como funciona a reserva de contas do mês?",
+      "Quais são as opções de parcelamento sem rotativo?",
+      "Quais despesas fixas vencem este mês?",
+      "Entender meus direitos sob a Lei 14.181"
+    ];
+  }
   for (const s of sugestoes) {
     const b = document.createElement("button");
     b.type = "button";
@@ -943,6 +1015,17 @@ $("btn-pagar-fatura-home").onclick = () => {
 };
 $("btn-parcelar-fatura-home").onclick = () => {
   dispararAcaoSmartCard({ tipo: "parcelar_fatura", n_parcelas: 3 });
+};
+
+// Navegação e Ação Rápida de Investimento Agêntico
+$("nav-investimentos").onclick = () => {
+  const card = $("smart-card-gestor");
+  card.scrollIntoView({ behavior: "smooth", block: "center" });
+  card.style.outline = "3px solid #ec7000";
+  setTimeout(() => { card.style.outline = "none"; }, 1500);
+};
+$("btn-quick-sweep").onclick = () => {
+  dispararAcaoSmartCard(contaAtiva?.diagnostico?.smart_card?.acao_primaria_payload);
 };
 
 // Inicialização: carrega Diego Takahashi (C004 - Personnalité com R$ 38k)

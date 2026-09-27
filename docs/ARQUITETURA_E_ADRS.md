@@ -1,147 +1,155 @@
-# Decisões de Arquitetura de Software (ADRs)
+# Decisões de Arquitetura (ADRs)
 
-> **Documento Oficial de Engenharia & Arquitetura de Solução**  
-> **Sistema:** Aplicaí  
-> **Framework Base:** Google ADK 2.x (Agent Development Kit)  
-> **Padrão de Governança:** Zero-Trust Financial Computing & Zero-LLM Math
-
----
-
-## Índice de Decisões Arquiteturais (ADRs)
-
-- [ADR 001: Arquitetura Biphasic (Colchão Dinâmico + Cash Sweeper)](#adr-001-arquitetura-biphasic-colchão-dinâmico--cash-sweeper)
-- [ADR 002: Separação Estrita entre Computação Determinística e Modelos Generativos](#adr-002-separação-estrita-entre-computação-determinística-e-modelos-generativos)
-- [ADR 003: Protocolo 2-Phase Commit com Capability Criptográfica HMAC-SHA256](#adr-003-protocolo-2-phase-commit-com-capability-criptográfica-hmac-sha256)
-- [ADR 004: Seleção de Modelos e Unit Economics de Inferência](#adr-004-seleção-de-modelos-e-unit-economics-de-inferência)
-- [ADR 005: Experiência Mobile Action-First com Smart Cards Nativos](#adr-005-experiência-mobile-action-first-com-smart-cards-nativos)
-- [ADR 006: Protocolo Model Context Protocol (MCP) para Desacoplamento do Core](#adr-006-protocolo-model-context-protocol-mcp-para-desacoplamento-do-core)
+> **Sistema:** Aplicaí
+> **Base:** Google ADK 2.x, Gemini, Cloud Run
+> **Regra que organiza tudo:** a IA conversa, o código calcula e o cliente aprova.
+> Visão completa da arquitetura, dos guardrails e da jornada em `ARQUITETURA_GCP_GUARDRAILS_E_JORNADA.md`.
 
 ---
 
-### ADR 001: Arquitetura Biphasic (Colchão Dinâmico + Cash Sweeper)
+## Índice
 
-#### Status
-**Aprovado e Implementado**
-
-#### Contexto
-A literatura tradicional de agentes de investimento para varejo costuma sugerir chatbots consultivos que perguntam o perfil de risco do cliente (suitability) e recomendam ativos de prateleira (CDBs, fundos, ações).  
-Ao analisar a base real de correntistas no BigQuery (`hackathon_dados.extrato_sintetico`), constatamos que **49,3% dos clientes gastam mais do que ganham e 32,7% entraram no cheque especial em 2025**, enquanto os outros **50,7% têm sobra mensal que fica parada na conta**. Um cliente oscila entre esses estados ao longo do mês: recebe o salário, tem débitos fixos como financiamento e escola logo em seguida e, depois, a fatura do cartão.
-
-#### Decisão
-Adotamos uma **Arquitetura Biphasic**:
-1. **Fase 1 (Colchão de Liquidez Dinâmico):** Antes de qualquer recomendação de aplicação, o motor determinístico projeta o fluxo de 30 dias e reserva 100% dos débitos fixos conhecidos (financiamento, contas de consumo, fatura em aberto) somados a uma margem de segurança para despesas essenciais do dia a dia (15% da renda).
-2. **Fase 2 (Cash Sweeping ou Proteção de Passivo):**
-   - Se houver excedente livre após o colchão $\rightarrow$ Aciona o **Sweeper de Liquidez**, recomendando aplicação no CDB 100% CDI com resgate diário.
-   - Se o saldo projetado for insuficiente para honrar a fatura $\rightarrow$ Bloqueia aplicações e aciona o **Escudo Anti-Rotativo**, recomendando parcelamento planejado para estancar juros de 14,9% a.m.
-
-#### Consequências
-- **Positivas:** Compliance total com o dever fiduciário bancário. Zero risco de um cliente aplicar dinheiro e ter seu financiamento habitacional rejeitado por falta de fundos.
-- **Negativas:** Exige sincronização contínua com agendamentos de débito automático do core banking.
+- [ADR 001: Projeção de 30 dias e reserva das contas antes de qualquer oferta](#adr-001)
+- [ADR 002: O código calcula; o modelo explica](#adr-002)
+- [ADR 003: Cotação, aprovação do cliente e autorização assinada](#adr-003)
+- [ADR 004: Um único produto de investimento e perfil de investidor obrigatório](#adr-004)
+- [ADR 005: Modelos, raciocínio baixo e custo por conversa](#adr-005)
+- [ADR 006: Cards na tela inicial, chat sob demanda](#adr-006)
+- [ADR 007: Banco exposto por MCP](#adr-007)
 
 ---
 
-### ADR 002: Separação Estrita entre Computação Determinística e Modelos Generativos
+<a id="adr-001"></a>
+### ADR 001: Projeção de 30 dias e reserva das contas antes de qualquer oferta
 
-#### Status
-**Aprovado e Implementado**
+**Status:** implementado (`gestor_caixa/motor_projecao.py`, `gestor_caixa/portao_risco.py`)
 
-#### Contexto
-Modelos de linguagem (LLMs) são probabilísticos e sujeitos a alucinações aritméticas, arredondamentos imprecisos e variabilidade não determinística em cálculos financeiros complexos (como juros compostos, IOF regressivo em dias úteis e tabela Price). No setor bancário, um erro de 1 centavo em cálculo de juros ou cotação invalida a operação perante a auditoria do Banco Central.
+**Contexto.** Na base do evento, 50,7% dos clientes ganham mais do que gastam e 49,3% gastam mais do que ganham; 32,7% entraram no cheque especial em 2025. O mesmo cliente oscila ao longo do mês: salário, depois financiamento e escola, depois a fatura. Um robô de investimento que olha só o saldo de hoje sugere aplicar dinheiro que vai fazer falta no dia 8.
 
-#### Decisão
-Implementamos a regra de **Zero-LLM Math**:
-- **A LLM NUNCA calcula:** Alíquotas de IOF, IR, taxas CDI, parcelas de financiamento ou saldos remanescentes.
-- **Toda matemática reside em módulos Python puros e determinísticos:**
-  - `gestor_caixa/simulador_liquidez.py`: CDI exato (252 dias úteis), IOF regressivo de 1 a 29 dias conforme Decreto 6.306/2007 e IR regressivo.
-  - `copiloto_fatura/tools/simulador.py`: Tabela Price para parcelamento de faturas, CET e IOF de crédito.
-- O LLM atua estritamente como **orquestrador semântico e comunicador empático**, recebendo os resultados calculados e formatados via Tool Calls tipadas do ADK.
+**Decisão.** Toda decisão parte de uma projeção dos próximos 30 dias, em código:
 
-#### Consequências
-- **Positivas:** 100% de precisão e auditabilidade matemática. Testabilidade unitária completa (156 testes automatizados com tempo de execução < 10 segundos).
-- **Negativas:** A interface de ferramentas (tool schemas) deve ser estritamente tipada com Pydantic v2.
+1. identificar as contas previstas na janela (saídas cadastradas e a fatura em aberto), com os prazos vindos dos próprios dados;
+2. reservar a soma dessas contas mais 15% da renda para o dia a dia;
+3. classificar o cliente (`endividado`, `falta_prevista`, `equilibrado`, `sobra_para_investir`) e calcular o que sobra;
+4. só então decidir o que o app mostra: oferta de investimento, pedido de atualização de perfil, opções para a fatura ou acolhimento.
+
+A reserva é conservadora de propósito: não conta com o salário que ainda não caiu. É melhor sugerir investir um pouco menos do que deixar faltar para uma conta; o CDB tem liquidez diária, então o cliente resgata se precisar.
+
+**Consequências.** Nenhum cliente recebe oferta de aplicação por um valor que comprometa as contas do mês (testado). O que fica para produção: sincronizar a lista de contas com os débitos automáticos reais do banco, em vez do cadastro do cliente simulado.
 
 ---
 
-### ADR 003: Protocolo 2-Phase Commit com Capability Criptográfica HMAC-SHA256
+<a id="adr-002"></a>
+### ADR 002: O código calcula; o modelo explica
 
-#### Status
-**Aprovado e Implementado**
+**Status:** implementado (`copiloto_fatura/tools/simulador.py`, `gestor_caixa/simulador_liquidez.py`)
 
-#### Contexto
-Agentes autônomos que realizam mutação de estado financeiro (transferências, aplicações, contratações de crédito) são vulneráveis a ataques de *Prompt Injection*, repetição não intencional de chamadas (*Double Spending* por repetição de tool call) e alucinações de argumentos.
+**Contexto.** Modelos de linguagem erram aritmética, arredondam de forma imprevisível e dão respostas diferentes para a mesma pergunta. Juros compostos, tabela Price, CET, IOF regressivo e IR regressivo não admitem isso.
 
-#### Decisão
-Implementamos o padrão de **2-Phase Commit com Capability Assinada**:
-1. **Fase de Cotação:** A ação gera uma cotação com base no estado atual do core. O host emite uma *Capability* assinada digitalmente com HMAC-SHA256 contendo o payload da cotação, um nonce aleatório e validade de 60 segundos.
-2. **Fase de Autenticação do Cliente:** O cliente aprova a operação visualmente através do modal oficial do **iToken Itaú** (seja via botão de 1 toque no Smart Card ou via ToolConfirmation no chat).
-3. **Fase de Execução (Core Bancário):** O core recebe a capability, valida a assinatura criptográfica, verifica a validade temporal de 60s e confere se a cotação mudou. Se a mesma capability for apresentada novamente, o core atua de forma idempotente, devolvendo o recibo anterior (*replay*) sem debitar o cliente duas vezes.
+**Decisão.** O modelo **nunca calcula**. Toda matemática está em funções Python puras:
+
+- fatura: pagamento mínimo, rotativo por 30 dias mais parcelamento obrigatório, Price para 3/6/12x, crédito pessoal, pagamento parcial, CET por bisseção, IOF de crédito, teto de 100% da dívida (Lei 14.690/2023);
+- investimento: CDI por dia útil (252/365), IOF regressivo do 1º ao 29º dia (Decreto 6.306/2007), IR regressivo (22,5% a 15%).
+
+O modelo recebe os resultados prontos pelas ferramentas do ADK e só escolhe o que perguntar e como explicar. O diagnóstico também é código, não um terceiro agente: um agente só para calcular somaria chamadas e custo sem somar qualidade.
+
+**Consequências.** Mesma entrada, mesmo resultado, auditável e testado com valores conhecidos (31 testes só de matemática). Os retornos das ferramentas precisam ser compactos, porque voltam ao modelo em todo turno seguinte.
+
+---
+
+<a id="adr-003"></a>
+### ADR 003: Cotação, aprovação do cliente e autorização assinada
+
+**Status:** implementado (`copiloto_fatura/guardrails.py`, `copiloto_fatura/autorizacao.py`, `mock_core/store.py`)
+
+**Contexto.** Um agente que movimenta dinheiro está exposto a três falhas: executar algo que o cliente não pediu (por manipulação do modelo ou por argumento inventado), executar duas vezes (repetição da chamada) e executar com valores diferentes dos que o cliente viu.
+
+**Decisão.** Toda operação (pagar, parcelar, aplicar, resgatar) segue o mesmo caminho, seja pelo chat, pelo card do app ou pelo MCP:
+
+1. **Cotar:** o código calcula exatamente o que vai acontecer, com os dados atuais do banco. As regras de elegibilidade e o limite da sobra rodam **dentro da cotação**; se a operação não é permitida, para aqui.
+2. **Aprovar:** o cliente vê um resumo gerado da cotação (não pelo modelo) e aprova. No chat, é o pedido de confirmação nativo do ADK, um evento fora do texto; escrever "sim" não aprova nada. No app, é o modal de autenticação. A aprovação vale 5 minutos, para aquela cotação, uma vez.
+3. **Autorizar:** o sistema emite uma autorização assinada (HMAC-SHA256) com a cotação, um nonce e validade de 60 segundos. O modelo nunca a vê; uma "autorização" enviada pelo modelo é descartada.
+4. **Executar:** o banco confere a assinatura, a validade, a operação, o cliente e os parâmetros, **recalcula a cotação** e só executa se nada mudou. A mesma autorização, ou a mesma operação no mesmo ciclo da fatura, devolve o comprovante original sem debitar de novo.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Cliente
-    participant Front as Itaú SuperApp
-    participant Host as Orquestrador ADK
-    participant Core as Core Bancário (MockStore)
+    participant App
+    participant Sistema as API / guardrails
+    participant Nucleo as Núcleo (código)
+    participant Banco
 
-    Cliente->>Front: Toque em "Aplicar com iToken"
-    Front->>Host: Solicita cotação da aplicação
-    Host->>Core: Cota saldo e rendimento
-    Core-->>Host: Cotação calculada
-    Host->>Host: Gera Capability assinada HMAC-SHA256 (nonce, 60s)
-    Host-->>Front: Exibe Modal iToken com código dinâmico
-    Cliente->>Front: Autoriza Biometria / iToken
-    Front->>Core: POST /api/executar/investimento (com Capability)
-    Core->>Core: Valida HMAC + Nonce + Idempotência
-    Core->>Core: Executa débito CC e crédito Custódia
-    Core-->>Front: Comprovante Oficial com Hash SHA-256
-    Front-->>Cliente: Exibe Comprovante e atualiza saldos
+    Cliente->>App: escolhe a operação (card ou chat)
+    App->>Sistema: pedido
+    Sistema->>Nucleo: cotar (regras + limite + valores)
+    Nucleo-->>Sistema: cotação
+    Sistema-->>Cliente: resumo: "Aplicar R$ 28.550,00... Aprova?"
+    Cliente->>Sistema: aprova (modal no app / confirmação do ADK no chat)
+    Sistema->>Sistema: assina autorização (HMAC, nonce, 60 s)
+    Sistema->>Banco: executar_autorizada(cotação, autorização)
+    Banco->>Nucleo: verificar assinatura e recotar
+    Banco-->>Sistema: comprovante (ou recusa)
+    Sistema-->>Cliente: comprovante e saldos atualizados
 ```
 
----
-
-### ADR 004: Seleção de Modelos e Unit Economics de Inferência
-
-#### Status
-**Aprovado e Implementado**
-
-#### Contexto
-A arquitetura deve suportar milhões de correntistas no Itaú SuperApp com latência imperceptível (< 1,5s) e viabilidade econômica em escala. Modelos ultra-pesados aumentam o custo e o tempo de resposta desnecessariamente para diálogos de apoio financeiro.
-
-#### Decisão
-- **Modelo Principal:** **Google Gemini 2.5 Flash** (ou `gemini-3.8-flash` via Google ADK).
-  - Raciocínio rápido (*low thinking*) para inferência de intenção e tool selection.
-  - Custo médio estimado: ~$0.00035 por interação completa (minimizando tokens via prompts enxutos).
-- **Modelo para Agente de Ação / Execução:** **Gemini Flash Lite**, com instruções ultracompactas focadas apenas no fechamento da transação.
-- **Plano B de Continuidade de Negócio (Fallback):** Módulo `demo_llm.py` para operação em contingência sem conectividade externa ou esgotamento de quota.
+**Consequências.** Sem autorização válida nada executa, mesmo que um guardrail seja removido por engano: a defesa está no banco, não só no agente. Testado contra autorização forjada, adulterada, expirada, reutilizada e para outro cliente ou parâmetro, inclusive pelo caminho MCP real. No protótipo, a identidade do cliente é simulada (`iniciar_atendimento` e o `cliente_id` no corpo da requisição do app); em produção ela vem do token do canal, validado no gateway.
 
 ---
 
-### ADR 005: Experiência Mobile Action-First com Smart Cards Nativos
+<a id="adr-004"></a>
+### ADR 004: Um único produto de investimento e perfil de investidor obrigatório
 
-#### Status
-**Aprovado e Implementado**
+**Status:** implementado (`gestor_caixa/portao_risco.py`, `data/gerar_dataset.py`)
 
-#### Contexto
-Usuários de banco de varejo não utilizam caixas de diálogo conversacionais para tarefas operacionais cotidianas (como checar saldo, pagar fatura ou aplicar excedente). Forçar o usuário a "bater papo" para investir adiciona atrito cognitivo severo e derruba o funil de conversão.
+**Contexto.** O dinheiro que o Aplicaí sugere aplicar é a sobra da conta corrente, que o cliente pode precisar no mês seguinte. E oferecer investimento exige adequação ao perfil do cliente.
 
-#### Decisão
-Invertemos o paradigma de "Chat-First" para **"Action-First com IA On-Demand"**:
-- **Smart Cards Proativos na Home:** O aplicativo expõe as oportunidades financeiras calculadas pelo agente diretamente na tela inicial da conta (ex: *"Você possui R$ 28.550 parados a 0%. Aplicar com iToken"*).
-- **Ação em 1 Toque:** O usuário pode efetivar a decisão sem digitar uma única palavra.
-- **Copiloto Conversacional Sob Demanda (Drawer Lateral):** O assistente Aplicaí fica acessível via botão flutuante para clientes que desejam aprofundar, simular cenários futuros ou tirar dúvidas em linguagem natural.
+**Decisão.** O único produto oferecido é o CDB de liquidez diária, 100% do CDI, com garantia do FGC: o mais conservador, adequado a qualquer perfil. Antes da oferta, cinco regras em código, nesta ordem: saldo negativo; endividado (negativado ou 3+ meses no rotativo em 12); falta prevista para as contas do mês; sobra insuficiente (menos de R$ 2.000 ou saldo abaixo de R$ 5.000); **perfil de investidor ausente ou vencido**. Sem perfil válido, o app pede a atualização em vez de ofertar, e a aplicação é recusada também na execução. O valor aplicado nunca passa da sobra do mês.
+
+É uma política interna **inspirada** na Resolução CVM 30 e na Lei 14.181/2021, não uma certificação de conformidade.
+
+**Consequências.** A escolha é de produto, não de público: liquidez diária é requisito, porque o dinheiro pode fazer falta. Com a adequação ao perfil completa, o mesmo núcleo passa a oferecer produtos de outros perfis. Cada recusa tem um código e uma explicação em português, o que atende à explicabilidade de decisões automatizadas (LGPD, art. 20).
 
 ---
 
-### ADR 006: Protocolo Model Context Protocol (MCP) para Desacoplamento do Core
+<a id="adr-005"></a>
+### ADR 005: Modelos, raciocínio baixo e custo por conversa
 
-#### Status
-**Aprovado e Implementado**
+**Status:** implementado (`copiloto_fatura/agent.py`, `copiloto_fatura/demo_llm.py`)
 
-#### Contexto
-Em ambientes bancários legados, acoplar o agente diretamente aos microsserviços de mensageria mainframe e core bancário gera fragilidade e risco de segurança.
+**Contexto.** O modelo só conversa e escolhe ferramentas; a qualidade dos números vem do código. Um modelo grande aumentaria custo e latência sem melhorar o resultado.
 
-#### Decisão
-Adotamos o padrão aberto **Model Context Protocol (MCP)**:
-- O core bancário é exposto através de um servidor MCP (`mock_core/server.py`), operando via transporte padronizado `stdio` ou SSE.
-- O agente consome ferramentas através do MCP Toolset do Google ADK (`COPILOTO_USE_MCP=1`), garantindo que a mesma inteligência possa ser conectada a diferentes provedores bancários sem reescrita de código.
+**Decisão.**
+
+- **Modelo:** `gemini-3.8-flash` por padrão (`COPILOTO_MODEL`), pela Gemini API ou pelo Vertex AI (`GOOGLE_GENAI_USE_ENTERPRISE=1`), sem mudar código.
+- **Raciocínio:** nível baixo por padrão (`COPILOTO_THINKING=low`), porque tokens de raciocínio contam na cota e as decisões do modelo aqui são simples (qual ferramenta chamar, como explicar).
+- **Agente de ações:** pode usar um modelo mais leve (`COPILOTO_MODEL_ACAO`); por padrão usa o mesmo da conversa.
+- **Plano B:** `COPILOTO_MODEL=demo` substitui o Gemini por um roteiro, sem internet e sem cota. Cobre a jornada da fatura; a jornada de investimento no app não depende do modelo (os cards são código).
+
+**Consequências.** Medido na avaliação (`eval_resultados.md`): cerca de 7,6 mil tokens de entrada e 500 de saída por conversa completa da fatura; um ataque de injeção custa zero, porque o guardrail responde antes do modelo. Latência e custo em escala não foram medidos em carga; ficam para o piloto.
+
+---
+
+<a id="adr-006"></a>
+### ADR 006: Cards na tela inicial, chat sob demanda
+
+**Status:** implementado (`web/servidor.py`, `web/static/index.html`)
+
+**Contexto.** Ninguém quer digitar num chat para saber se pode aplicar R$ 1.000. A decisão precisa aparecer no momento certo, com a ação pronta.
+
+**Decisão.** A tela inicial mostra um card calculado em código para a situação do cliente: aplicar a sobra (um toque), atualizar o perfil de investidor, proteger a fatura contra o rotativo ou falar com uma pessoa. O chat com o Aplicaí abre sob demanda, para quem quer entender o cálculo, simular ou perguntar sobre regras. O card e o chat usam as mesmas ferramentas e passam pelo mesmo caminho de aprovação.
+
+**Consequências.** A demo principal (Diego) não depende do modelo. O chat continua necessário para a jornada da fatura, em que a conversa importa (o cliente escolhe entre opções e pode precisar de acolhimento).
+
+---
+
+<a id="adr-007"></a>
+### ADR 007: Banco exposto por MCP
+
+**Status:** implementado (`mock_core/server.py`, `COPILOTO_USE_MCP=1`)
+
+**Contexto.** Acoplar o agente diretamente ao sistema que executa operações dificulta trocar o sistema e testar a fronteira entre os dois.
+
+**Decisão.** O banco simulado também é exposto por um servidor MCP (transporte `stdio`). Com `COPILOTO_USE_MCP=1`, as ferramentas de operação do agente passam pelo protocolo. A autorização assinada atravessa a fronteira e é conferida do outro lado; a chave de assinatura chega ao processo MCP pelo ambiente, nunca pelo modelo.
+
+**Consequências.** A mesma inteligência conecta a outro provedor sem reescrever o agente. O processo MCP tem a própria cópia do banco simulado; em produção, os dois lados apontam para o mesmo sistema. Há um teste de integração que sobe o servidor por `stdio` e confere a recusa sem autorização.

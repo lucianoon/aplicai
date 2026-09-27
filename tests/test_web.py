@@ -106,3 +106,10 @@ def test_api_execucoes_bancarias(cliente):
     assert res_parc.status_code == 200
     assert res_parc.json()["status"] == "sucesso"
 
+
+def test_api_investimento_respeita_colchao(cliente):
+    saldo = STORE.get_fluxo_previsto("C004")["saldo_atual"]
+    res = cliente.post("/api/executar/investimento", json={"cliente_id": "C004", "valor": saldo})
+    assert res.status_code == 400
+    assert "capital livre" in res.json()["detail"]
+    assert STORE.get_fluxo_previsto("C004")["saldo_atual"] == saldo

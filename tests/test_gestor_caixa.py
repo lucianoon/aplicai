@@ -143,3 +143,36 @@ def test_tools_contexto_analisar_caixa_e_liquidez():
     assert "saldo_atual" in diag
     assert "colchao_minimo_obrigatorio" in diag
     assert "regime" in diag
+
+
+def test_aplicar_cdb_bloqueado_pelo_portao_no_caminho_de_execucao():
+    # cliente com saldo, mas em déficit crítico: nem cotação nem execução passam
+    cliente_id = "C001"
+    c = STORE._cliente(cliente_id)
+    c["saldo_conta"] = 15000.0
+    c["negativado"] = True
+
+    args = {"valor": 1000.0, "dias_permanencia": 30}
+    with pytest.raises(ValueError, match="BLOQUEIO_SUITABILITY"):
+        cotar(STORE, "aplicar_cdb", cliente_id, args)
+
+    # capacidade forjada com a cotação de antes: o core recalcula e recusa
+    token = assinar({"acao": "aplicar_cdb", "cliente_id": cliente_id, **args}, "nonce-forjado")
+    with pytest.raises(ValueError):
+        STORE.executar_autorizada("aplicar_cdb", cliente_id, args, token)
+    assert c["saldo_conta"] == 15000.0
+
+
+def test_aplicar_cdb_nao_invade_o_colchao():
+    cliente_id = "C004"
+    saldo = STORE.get_fluxo_previsto(cliente_id)["saldo_atual"]
+    renda = STORE.get_perfil(cliente_id)["renda_mensal"]
+    proj = MotorProjecaoCaixa.projetar(cliente_id, saldo, renda, STORE._cliente(cliente_id))
+    assert proj.colchao_minimo_obrigatorio > 0
+
+    with pytest.raises(ValueError, match="capital livre"):
+        cotar(STORE, "aplicar_cdb", cliente_id, {"valor": saldo})
+
+    # o capital livre inteiro pode ser aplicado
+    q = cotar(STORE, "aplicar_cdb", cliente_id, {"valor": proj.saldo_livre_efetivo})
+    assert q["valor"] == proj.saldo_livre_efetivo

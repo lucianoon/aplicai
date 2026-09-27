@@ -61,10 +61,22 @@ def cotar(store, acao: str, cliente_id: str, args: dict) -> dict:
     if acao in ("aplicar_cdb", "resgatar_cdb"):
         q = {"acao": acao, "cliente_id": cliente_id, **p}
         if acao == "aplicar_cdb":
-            saldo = store.get_fluxo_previsto(cliente_id)["saldo_atual"]
-            if p["valor"] > saldo:
-                raise ValueError(f"saldo em conta ({brl(saldo)}) insuficiente para aplicar {brl(p['valor'])}")
+            from gestor_caixa.motor_projecao import MotorProjecaoCaixa
+            from gestor_caixa.portao_risco import PortaoRisco
             from gestor_caixa.simulador_liquidez import SimuladorLiquidez
+
+            # portão de suitability e colchão no caminho de execução: vale para agente, MCP e app
+            saldo = store.get_fluxo_previsto(cliente_id)["saldo_atual"]
+            renda = store.get_perfil(cliente_id)["renda_mensal"]
+            proj = MotorProjecaoCaixa.projetar(cliente_id, saldo, renda, store._cliente(cliente_id))
+            elegivel, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
+            if not elegivel:
+                raise ValueError(motivo)
+            if p["valor"] > proj.saldo_livre_efetivo:
+                raise ValueError(
+                    f"o valor passa do capital livre para aplicar ({brl(proj.saldo_livre_efetivo)}): "
+                    f"{brl(proj.colchao_minimo_obrigatorio)} ficam reservados para os compromissos do mês"
+                )
             sim = SimuladorLiquidez.simular_rendimento(p["valor"], p.get("dias_permanencia", 30))
             q.update(
                 rendimento_liquido=sim["rendimento_liquido"],

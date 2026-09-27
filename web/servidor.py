@@ -324,14 +324,12 @@ class RequisicaoInvestimento(BaseModel):
 @app.post("/api/executar/investimento")
 def executar_investimento(req: RequisicaoInvestimento) -> dict[str, Any]:
     """Aplica no CDB com 2-Phase Commit e capability HMAC assinada (Zero-LLM execution)."""
-    raw = STORE._cliente(req.cliente_id)
-    proj = MotorProjecaoCaixa.projetar(req.cliente_id, raw["saldo_conta"], raw["renda_mensal"], raw)
-    aut, mot = PortaoRisco.avaliar_elegibilidade_investimento(proj)
-    if not aut:
-        raise HTTPException(status_code=400, detail=mot)
-
     args = {"valor": req.valor, "dias_permanencia": req.dias_permanencia}
-    cotacao = cotar(STORE, "aplicar_cdb", req.cliente_id, args)
+    try:
+        # a cotação aplica o portão de risco e o limite do colchão
+        cotacao = cotar(STORE, "aplicar_cdb", req.cliente_id, args)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from None
     nonce = secrets.token_hex(16)
     token = assinar(cotacao, nonce)
     recibo = STORE.executar_autorizada("aplicar_cdb", req.cliente_id, args, token, canal="app_superapp_itoken")

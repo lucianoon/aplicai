@@ -7,6 +7,7 @@ e pode citar nomes, números e promessas que mudaram (colchão, Cash Sweeper, re
 Para o estado atual, use os documentos da raiz de `docs/`:
 
 - `ARQUITETURA_GCP_GUARDRAILS_E_JORNADA.md`: comece por aqui (GCP, guardrails, fluxo da jornada)
+- `desenho_de_solucao.md`: desenho da solução para a submissão
 - `ARQUITETURA_E_ADRS.md`, `RAI_E_GUARDRAILS.md`, `BUSINESS_CASE_E_DADOS.md`
 - `analise_dados_extrato_sintetico.md`, `eval_resultados.md`
 - `ROTEIRO_DEMO_PITCH.md`, `ficha-submissao.md`

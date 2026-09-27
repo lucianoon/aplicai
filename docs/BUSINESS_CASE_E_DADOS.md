@@ -15,7 +15,7 @@ Ao realizarmos a Análise Exploratória de Dados (EDA) na base oficial da Batalh
 - **507 clientes (50,7% da base)** ganham mais do que gastam no mês.
 - Parte dessa sobra fica na conta corrente sem nenhum rendimento, rendendo **0% ao mês**.
 - **O Custo de Oportunidade do Cliente:** Com o CDI a ~10,75% a.a., R$ 25.000,00 parados deixam de render cerca de **R$ 165 líquidos em 30 dias** (cerca de R$ 2.200 em um ano), pelo simulador do projeto.
-- **A Oportunidade para o Itaú:** Ao oferecer o *Cash Sweeper* automatizado com resgate D+0, o Itaú converte depósitos à vista não fidelizados em captação líquida estável de **CDB e LCI/LCA**, aumentando o *Share of Wallet* e a retenção frente a fintechs concorrentes.
+- **A Oportunidade para o Itaú:** Ao oferecer a aplicação da sobra com um toque e resgate a qualquer dia, o Itaú converte depósitos à vista não fidelizados em captação estável de **CDB de liquidez diária**, aumentando a participação na carteira do cliente e a retenção frente a fintechs concorrentes.
 
 ### 1.2 O Aperto que Vira Juros
 - **493 clientes (49,3% da base)** gastam mais do que ganham no mês.

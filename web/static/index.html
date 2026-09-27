@@ -136,6 +136,9 @@
   .smart-card-gestor.tema-verde {
     border-color: #10b981; background: linear-gradient(180deg, #f7fdfa 0%, #ffffff 100%);
   }
+  .smart-card-gestor.tema-azul {
+    border-color: #3b82f6; background: linear-gradient(180deg, #f5f9ff 0%, #ffffff 100%);
+  }
 
   .smart-tag-row {
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
@@ -709,6 +712,7 @@ function dispararAcaoSmartCard(payload) {
       <tr><td>Produto</td><td>CDB Itaú Liquidez Diária</td></tr>
       <tr><td>Rentabilidade</td><td>100% do CDI</td></tr>
       <tr><td>Garantia</td><td>FGC até R$ 250.000,00</td></tr>
+      <tr><td>Adequação</td><td>Produto conservador, adequado ao seu perfil de investidor</td></tr>
       <tr><td>Valor a Debitar</td><td>${formatarBRL(payload.valor)}</td></tr>
       <tr><td>Carência / Resgate</td><td>Imediata (Liquidez D+0)</td></tr>
     `;
@@ -720,6 +724,10 @@ function dispararAcaoSmartCard(payload) {
       <tr><td>Taxa Especial</td><td>1,99% a.m. (vs 14,9% rotativo)</td></tr>
       <tr><td>Economia Projetada</td><td>R$ 375,10 em juros</td></tr>
     `;
+  } else if (payload.tipo === "perfil") {
+    abrirDrawerIA();
+    falarNoDrawer("Por que preciso atualizar meu perfil de investidor antes de investir?");
+    return;
   } else if (payload.tipo === "especialista") {
     abrirDrawerIA();
     falarNoDrawer("Gostaria de falar com um especialista em renegociação sobre o meu caso sob a Lei 14.181.");

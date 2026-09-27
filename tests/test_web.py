@@ -107,6 +107,15 @@ def test_api_execucoes_bancarias(cliente):
     assert res_parc.json()["status"] == "sucesso"
 
 
+def test_cliente_com_sobra_mas_sem_perfil_ve_card_de_perfil(cliente):
+    STORE._cliente("C004")["perfil_investidor"] = None
+    dados = cliente.get("/api/conta/C004").json()["diagnostico"]
+    assert dados["elegivel_investimento"] is False
+    assert dados["smart_card"]["tipo"] == "ATUALIZAR_PERFIL"
+    res = cliente.post("/api/executar/investimento", json={"cliente_id": "C004", "valor": 1000.0})
+    assert res.status_code == 400 and "PERFIL" in res.json()["detail"]
+
+
 def test_api_investimento_respeita_colchao(cliente):
     saldo = STORE.get_fluxo_previsto("C004")["saldo_atual"]
     res = cliente.post("/api/executar/investimento", json={"cliente_id": "C004", "valor": saldo})

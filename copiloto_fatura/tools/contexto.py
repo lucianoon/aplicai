@@ -413,6 +413,7 @@ def analisar_caixa_e_liquidez(tool_context: ToolContext = None) -> dict:
         "proximo_grande_debito": proj.data_proximo_grande_debito,
         "elegivel_investimento": elegivel,
         "justificativa_suitability": motivo_regulatorio,
+        "perfil_investidor": proj.perfil_investidor if proj.perfil_investidor_valido else "ausente ou vencido",
     }
 
     if elegivel and proj.saldo_livre_efetivo >= 1000.0:

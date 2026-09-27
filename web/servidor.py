@@ -414,7 +414,7 @@ def personas() -> dict:
             "abertura": alvo["mensagem_abertura"] if alvo else None,
             "dias": fatura["dias_ate_vencimento"],
         })
-    return {"modelo": os.getenv("COPILOTO_MODEL", "gemini-3.5-flash-lite"), "personas": lista}
+    return {"modelo": os.getenv("COPILOTO_MODEL", "gemini-3.8-flash"), "personas": lista}
 
 
 @app.post("/demo/reiniciar")

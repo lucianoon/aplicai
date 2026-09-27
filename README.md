@@ -121,6 +121,7 @@ A política de investimento é interna e **inspirada** na Resolução CVM 30 e n
 ├── scripts/                   # Deploy no Cloud Run, recursos GCP, carga do BigQuery
 ├── docs/
 │   ├── ARQUITETURA_GCP_GUARDRAILS_E_JORNADA.md  # Comece por aqui
+│   ├── desenho_de_solucao.md  # Desenho da solução (entregável da banca)
 │   ├── ARQUITETURA_E_ADRS.md  # Decisões de arquitetura (ADR 001 a 007)
 │   ├── RAI_E_GUARDRAILS.md    # IA responsável e guardrails
 │   ├── BUSINESS_CASE_E_DADOS.md # Business case e números da base

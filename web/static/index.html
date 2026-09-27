@@ -332,6 +332,22 @@
     background: #ffffff; color: var(--itau-texto-primario);
     border-top-left-radius: 4px; border: 1px solid var(--itau-borda);
   }
+  .chat-balao.digitando {
+    color: var(--itau-texto-secundario); font-style: italic; background: #f8fafc;
+    border: 1px dashed var(--itau-borda); display: flex; align-items: center; gap: 8px;
+  }
+  .chat-confirmacao {
+    margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .chat-confirmacao button {
+    padding: 7px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border: none;
+  }
+  .chat-confirmacao .btn-aprovar-conf {
+    background: var(--itau-laranja); color: #fff;
+  }
+  .chat-confirmacao .btn-recusar-conf {
+    background: #e2e8f0; color: #334155;
+  }
   .chat-chip-auditoria {
     text-align: center; margin: 4px 0; font-size: 11px;
   }
@@ -935,12 +951,117 @@ function atualizarSugestoesDrawer() {
   }
 }
 
+function adicionarIndicadorDigitando() {
+  const d = document.createElement("div");
+  d.className = "chat-balao bot digitando";
+  d.id = "digitando-" + Date.now();
+  d.innerHTML = "<span>⚡ Aplicaí está analisando...</span>";
+  $("drawer-msgs").appendChild(d);
+  $("drawer-msgs").scrollTop = $("drawer-msgs").scrollHeight;
+  return d.id;
+}
+
+function removerIndicadorDigitando(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function adicionarBolhaConfirmacao(callId, hint) {
+  const d = document.createElement("div");
+  d.className = "chat-balao bot";
+  d.innerHTML = `
+    <div>${escapar(hint)}</div>
+    <div class="chat-confirmacao" id="conf-box-${callId}">
+      <button class="btn-aprovar-conf" type="button" onclick="responderConfirmacao('${callId}', true)">Aprovar</button>
+      <button class="btn-recusar-conf" type="button" onclick="responderConfirmacao('${callId}', false)">Recusar</button>
+    </div>
+  `;
+  $("drawer-msgs").appendChild(d);
+  $("drawer-msgs").scrollTop = $("drawer-msgs").scrollHeight;
+}
+
+async function responderConfirmacao(callId, confirmado) {
+  if (ocupado || !sessaoADK) return;
+  const box = $("conf-box-" + callId);
+  if (box) box.style.display = "none";
+  ocupado = true;
+  $("drawer-submit").disabled = true;
+  adicionarBolha(confirmado ? "Aprovar" : "Recusar", "cli");
+  const idInd = adicionarIndicadorDigitando();
+
+  try {
+    const eventos = await api("/run", {
+      appName: APP,
+      userId: USUARIO,
+      sessionId: sessaoADK,
+      newMessage: {
+        role: "user",
+        parts: [{
+          functionResponse: {
+            id: callId,
+            name: "adk_request_confirmation",
+            response: { confirmed: confirmado }
+          }
+        }]
+      }
+    });
+    processarEventosDrawer(eventos);
+    if (confirmado && contaAtiva) {
+      await carregarConta(contaAtiva.cliente_id);
+    }
+  } catch (e) {
+    adicionarBolha("Tive uma instabilidade ao processar a confirmação. Por favor, tente novamente.", "bot");
+  } finally {
+    removerIndicadorDigitando(idInd);
+    ocupado = false;
+    $("drawer-submit").disabled = false;
+  }
+}
+
+function processarEventosDrawer(eventos) {
+  let exibiuTexto = false;
+  for (const ev of eventos) {
+    if (ev.author === "user") continue;
+    for (const p of (ev.content && ev.content.parts) || []) {
+      if (p.functionCall) {
+        if (p.functionCall.name === "adk_request_confirmation") {
+          const hint = p.functionCall.args?.toolConfirmation?.hint || "Deseja autorizar esta operação?";
+          const callId = p.functionCall.id;
+          adicionarBolhaConfirmacao(callId, hint);
+          exibiuTexto = true;
+        } else if (p.functionCall.name !== "transfer_to_agent") {
+          adicionarChip(`⚡ Executou: ${p.functionCall.name}`);
+        }
+      } else if (p.text && !p.thought) {
+        adicionarBolha(p.text.replace(/\n/g, "<br>"), "bot");
+        exibiuTexto = true;
+      }
+    }
+    if (!exibiuTexto && ev.actions?.requestedToolConfirmations) {
+      for (const [callId, conf] of Object.entries(ev.actions.requestedToolConfirmations)) {
+        if (conf && conf.hint) {
+          adicionarBolhaConfirmacao(callId, conf.hint);
+          exibiuTexto = true;
+        }
+      }
+    }
+  }
+}
+
 async function falarNoDrawer(texto) {
-  if (!texto.trim() || ocupado || !sessaoADK) return;
+  if (!texto.trim() || ocupado) return;
+  if (!sessaoADK && contaAtiva) {
+    await iniciarSessaoADK(contaAtiva.cliente_id, contaAtiva.primeiro_nome);
+  }
+  if (!sessaoADK) {
+    adicionarBolha("Conectando ao assistente... Por favor, tente novamente em instantes.", "bot");
+    return;
+  }
   ocupado = true;
   $("drawer-input").value = "";
   adicionarBolha(escapar(texto), "cli");
   $("drawer-submit").disabled = true;
+  const idInd = adicionarIndicadorDigitando();
 
   try {
     const eventos = await api("/run", {
@@ -949,20 +1070,11 @@ async function falarNoDrawer(texto) {
       sessionId: sessaoADK,
       newMessage: { role: "user", parts: [{ text: texto }] }
     });
-
-    for (const ev of eventos) {
-      if (ev.author === "user") continue;
-      for (const p of (ev.content && ev.content.parts) || []) {
-        if (p.functionCall) {
-          adicionarChip(`⚡ Executou: ${p.functionCall.name}`);
-        } else if (p.text && !p.thought) {
-          adicionarBolha(p.text.replace(/\n/g, "<br>"), "bot");
-        }
-      }
-    }
+    processarEventosDrawer(eventos);
   } catch (e) {
     adicionarBolha("Tive uma instabilidade momentânea ao processar sua dúvida. Por favor, tente novamente.", "bot");
   } finally {
+    removerIndicadorDigitando(idInd);
     ocupado = false;
     $("drawer-submit").disabled = false;
   }

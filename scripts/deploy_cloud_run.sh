@@ -29,25 +29,29 @@ docker build -t "$IMAGE_TAG" .
 docker push "$IMAGE_TAG"
 
 echo "3. Verificando segredos no Google Secret Manager..."
-SECRETS_PARAM=""
+SECRETS_LIST=()
 if gcloud secrets describe copiloto-auth-secret --project "$PROJETO" >/dev/null 2>&1; then
     echo "Segredo copiloto-auth-secret detectado no Secret Manager. Injetando no Cloud Run..."
-    SECRETS_PARAM="--set-secrets=COPILOTO_AUTH_SECRET=copiloto-auth-secret:latest"
+    SECRETS_LIST+=("COPILOTO_AUTH_SECRET=copiloto-auth-secret:latest")
+elif gcloud secrets describe assistente-segredo-autorizacao --project "$PROJETO" >/dev/null 2>&1; then
+    echo "Segredo assistente-segredo-autorizacao detectado no Secret Manager. Injetando no Cloud Run..."
+    SECRETS_LIST+=("COPILOTO_AUTH_SECRET=assistente-segredo-autorizacao:latest")
 else
     echo "Aviso: copiloto-auth-secret não encontrado no Secret Manager. O host gerará a chave dinamicamente."
 fi
 
 # Chave oficial provida pelo hackathon
-GEMINI_KEY_VAL=""
 if gcloud secrets describe gemini-api-key --project "$PROJETO" >/dev/null 2>&1; then
-    echo "Chave gemini-api-key detectada no Secret Manager. Injetando no Cloud Run..."
-    GEMINI_KEY_VAL=$(gcloud secrets versions access latest --secret="gemini-api-key" --project "$PROJETO" 2>/dev/null || true)
+    echo "Chave gemini-api-key detectada no Secret Manager. Injetando como segredo no Cloud Run..."
+    SECRETS_LIST+=("GEMINI_API_KEY=gemini-api-key:latest")
+fi
+
+SECRETS_PARAM=""
+if [ ${#SECRETS_LIST[@]} -gt 0 ]; then
+    SECRETS_PARAM="--set-secrets=$(IFS=,; echo "${SECRETS_LIST[*]}")"
 fi
 
 ENV_VARS="GOOGLE_GENAI_USE_ENTERPRISE=0,GOOGLE_CLOUD_PROJECT=$PROJETO,GOOGLE_CLOUD_LOCATION=$REGIAO,PYTHONUTF8=1,COPILOTO_USE_BIGQUERY=1,BIGQUERY_DATASET=hackathon_dados,BIGQUERY_TABLE=extrato_sintetico,COPILOTO_MODEL=gemini-3.5-flash-lite,COPILOTO_THINKING=low"
-if [ -n "$GEMINI_KEY_VAL" ]; then
-    ENV_VARS="$ENV_VARS,GEMINI_API_KEY=$GEMINI_KEY_VAL"
-fi
 
 echo "4. Fazendo deploy no Cloud Run..."
 gcloud run deploy "$SERVICO" \

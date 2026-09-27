@@ -8,7 +8,7 @@ preenchido pelo modelo: isso fecha o acesso a dados de terceiros e economiza
 tokens. ``iniciar_atendimento`` simula o login; em produção o ``cliente_id``
 chega autenticado no ``state`` da sessão e a tool só carrega o contexto.
 
-LGPD e equidade (ver docs/rai.md):
+LGPD e equidade (ver docs/RAI_E_GUARDRAILS.md e docs/ARQUITETURA_GCP_GUARDRAILS_E_JORNADA.md):
 - minimização: o modelo recebe só o que precisa para explicar a fatura. Negativação,
   histórico de rotativo, idade e score ficam no core e nunca entram no payload;
 - acessibilidade é dado de saúde (dado sensível): só vai ao modelo e à memória com

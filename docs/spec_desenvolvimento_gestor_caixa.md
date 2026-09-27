@@ -168,7 +168,7 @@ class PortaoRisco:
 
 ### 5.1 Racional Matemático
 Com base nas 467k transações analisadas:
-* O débito do **Financiamento Habitacional (dia 8)** consome R$ 2.845 em 70% dos clientes.
+* O débito do **Financiamento Habitacional**, logo após o salário, é um dos principais compromissos fixos.
 * A **Fatura do Cartão** vence entre os dias 15 e 30 (média de R$ 1.570).
 
 A fórmula do capital efetivamente aplicável é:

@@ -14,8 +14,8 @@
 
 No setor bancário de varejo e alta renda, existem dois extremos críticos identificados na análise dos dados oficiais (`hackathon_dados.extrato_sintetico` — 467.585 transações de 1.000 clientes no BigQuery):
 
-1. **R$ 13,48 Milhões de Liquidez Ociosa a 0%:** 298 clientes mantêm reservas expressivas na conta corrente (R$ 20.000 a R$ 38.000) sem qualquer rendimento, perdendo poder de compra para a inflação.
-2. **R$ 541 Mil Queimados em Juros e 68,9% em Rotativo:** 49,3% da base gasta mais do que ganha e 68,9% já entrou no rotativo (14,9% a.m.) ou no cheque especial, muitas vezes por descasamento temporário de fluxo com contas fixas (ex: débito de Financiamento Habitacional de ~R$ 2.845 no dia 8).
+1. **Dinheiro parado a 0%:** 507 clientes (50,7% da base) ganham mais do que gastam. Parte dessa sobra fica na conta corrente sem nenhum rendimento, perdendo poder de compra para a inflação.
+2. **Aperto que vira juros:** 493 clientes (49,3%) gastam mais do que ganham e 327 (32,7%) entraram no cheque especial em 2025, com 56.141 transações feitas com saldo devedor. Muitas vezes o motivo é o descasamento entre a data do salário e contas fixas como financiamento e escola.
 
 ### A Inovação do Produto: Investimento com Proteção Ativa de Caixa
 A maioria dos "robôs de investimento" do mercado falha porque é **passiva** (depende do cliente abrir um chat para pedir conselho) e **cega** (recomenda produtos sem olhar o fluxo futuro de despesas essenciais).
@@ -165,7 +165,7 @@ O projeto é 100% gerenciado via `uv` para reprodutibilidade determinística e i
 
 | Critério de Avaliação | Como Este Projeto Entrega Excelência |
 | :--- | :--- |
-| **Business Thinking (30%)** | Baseado em dados reais do BigQuery: captura R$ 13,5M de liquidez ociosa para CDB e estanca R$ 541k em perdas de juros com redução de PDD. |
+| **Business Thinking (30%)** | Baseado na base do evento (1.000 clientes, 467.585 transações): metade da base gasta mais do que ganha e precisa evitar juros; a outra metade tem sobra parada que pode render. |
 | **Design & Experiência (20%)** | Mobile UX de produção: elimina interfaces engessadas de chatbot puro; entrega **Smart Cards proativos nativos com execução em 1 toque**. |
 | **Engenharia & Dados (50%)** | Google ADK 2.x nativo, **150 testes automatizados passando**, separação Zero-LLM para matemática financeira, iToken 2-Phase Commit com HMAC-SHA256 e travas alinhadas à CVM 30, à LGPD e à Lei 14.181. |
 

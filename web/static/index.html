@@ -245,7 +245,7 @@
   .nav-item.ativo { color: var(--itau-laranja); }
   .nav-item span.icon { font-size: 19px; }
 
-  /* Modal do iToken (Autenticação 2-Phase Commit) */
+  /* Modal do iToken (aprovação da operação) */
   .modal-overlay {
     position: absolute; inset: 0; background: rgba(6, 20, 38, 0.75); z-index: 60;
     display: none; align-items: center; justify-content: center; padding: 20px;
@@ -407,9 +407,9 @@
   <div style="background:linear-gradient(90deg, #0a1f3d 0%, #0d284f 100%); padding:6px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(236,112,0,0.35);">
     <span style="font-size:11px; font-weight:700; color:#ff9f43; display:flex; align-items:center; gap:6px;">
       <span style="width:8px; height:8px; background:#10b981; border-radius:50%; display:inline-block; box-shadow:0 0 8px #10b981;"></span>
-      Investimento Agêntico Ativo
+      Aplicaí ativo
     </span>
-    <span style="font-size:10.5px; color:#cbd5e1; font-weight:600;">Cash Sweeper 30d</span>
+    <span style="font-size:10.5px; color:#cbd5e1; font-weight:600;">Projeção de 30 dias</span>
   </div>
 
   <!-- Scroll Principal -->
@@ -436,21 +436,21 @@
         </div>
       </div>
 
-      <!-- Barra Visual de Alocação Inteligente de Liquidez -->
+      <!-- Barra: reserva das contas do mês e sobra disponível -->
       <div class="sweep-alloc-box" id="sweep-alloc-box" style="margin-top:14px; padding:12px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; display:flex; flex-direction:column; gap:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:11px; font-weight:800; color:#0f172a; text-transform:uppercase; letter-spacing:0.5px;">🤖 Alocação Inteligente de Caixa</span>
-            <span style="background:#ecfdf5; color:#065f46; font-size:9.5px; padding:2px 7px; border-radius:10px; border:1px solid #a7f3d0; font-weight:700;">Cash Sweeper</span>
+            <span style="font-size:11px; font-weight:800; color:#0f172a; text-transform:uppercase; letter-spacing:0.5px;">Seu mês em números</span>
+            <span style="background:#ecfdf5; color:#065f46; font-size:9.5px; padding:2px 7px; border-radius:10px; border:1px solid #a7f3d0; font-weight:700;">Sobra do mês</span>
           </div>
           <button type="button" id="btn-quick-sweep" style="background:var(--itau-laranja); color:#fff; border:none; border-radius:8px; padding:6px 12px; font-size:11.5px; font-weight:700; cursor:pointer; box-shadow:0 2px 6px rgba(236,112,0,0.25); display:inline-flex; align-items:center; gap:4px; transition:transform 0.15s ease;">
-            ⚡ Investir Excedente
+            ⚡ Investir a sobra
           </button>
         </div>
 
         <!-- Barra visual de progresso proporcional -->
         <div style="height:10px; width:100%; background:#e2e8f0; border-radius:6px; overflow:hidden; display:flex;" title="Distribuição de liquidez planejada">
-          <div id="bar-reserva-contas" style="width:25.3%; background:linear-gradient(90deg, #1e3a8a, #2563eb); transition:width 0.4s ease;" title="Reserva de Contas (Blindada)"></div>
+          <div id="bar-reserva-contas" style="width:25.3%; background:linear-gradient(90deg, #1e3a8a, #2563eb); transition:width 0.4s ease;" title="Reserva para as contas do mês"></div>
           <div id="bar-excedente-investir" style="width:74.7%; background:linear-gradient(90deg, #10b981, #059669); transition:width 0.4s ease;" title="Disponível para Investir"></div>
         </div>
 
@@ -471,7 +471,7 @@
     <section class="smart-card-gestor tema-laranja" id="smart-card-gestor">
       <div class="smart-tag-row">
         <span class="smart-badge-proativo" id="smart-card-badge">⚡ Oportunidade de Liquidez</span>
-        <span style="font-size:11px; color:var(--itau-texto-secundario); font-weight:600;">Zero-Friction</span>
+        <span style="font-size:11px; color:var(--itau-texto-secundario); font-weight:600;">Calculado em código</span>
       </div>
       <div class="smart-card-titulo" id="smart-card-titulo">
         Você tem R$ 28.550,00 parados na conta rendendo 0%
@@ -503,7 +503,7 @@
       <div class="valor-fatura-row" id="txt-valor-fatura">R$ 4.250,00</div>
       <div class="fatura-detalhe-linha">
         <span>Status da fatura: <b id="txt-status-fatura" style="color:var(--itau-texto-primario);">Aberta</b></span>
-        <span id="txt-status-protecao-fatura" style="color:#027a48; font-weight:600; font-size:11px;">🛡️ Reserva Blindada para o Mês</span>
+        <span id="txt-status-protecao-fatura" style="color:#027a48; font-weight:600; font-size:11px;">🛡️ Contas do mês reservadas</span>
       </div>
       <div style="display:flex; gap:8px;">
         <button type="button" class="btn-acao-smart-secundaria" style="flex:1;" id="btn-pagar-fatura-home">
@@ -599,7 +599,7 @@
       <div class="drawer-header">
         <div class="drawer-titulo-box">
           <b>Aplicaí — assistente financeiro Itaú</b>
-          <span>Assistente Inteligente Autônomo</span>
+          <span>A sobra do mês rendendo, sem faltar para as contas</span>
         </div>
         <button class="btn-fechar-drawer" id="btn-fechar-drawer" type="button">✕</button>
       </div>
@@ -671,7 +671,7 @@ async function carregarConta(clienteId) {
     $("txt-saldo-investido").textContent = dados.total_investido_formatado;
     $("txt-limite-lis").textContent = dados.limite_cheque_especial_formatado;
 
-    // Atualiza Caixa e Varredura Agêntica
+    // Atualiza a barra de reserva e sobra
     if (dados.diagnostico) {
       const colchao = dados.diagnostico.colchao_minimo_obrigatorio || 9700.0;
       const livre = dados.diagnostico.saldo_livre_efetivo || 0.0;
@@ -876,12 +876,12 @@ async function iniciarSessaoADK(cid, primNome) {
       state: { cliente_id: cid, primeiro_nome: primNome }
     });
     sessaoADK = s.id;
-    // Saudação Proativa de Investimento Agêntico ou Proteção
+    // Saudação: oferta de investimento ou orientação
     if (contaAtiva?.diagnostico?.elegivel_investimento && contaAtiva?.diagnostico?.saldo_livre_efetivo >= 500) {
       const livre = formatarBRL(contaAtiva.diagnostico.saldo_livre_efetivo);
       const reserva = formatarBRL(contaAtiva.diagnostico.colchao_minimo_obrigatorio);
       const rend = contaAtiva?.diagnostico?.simulacao_investimento ? formatarBRL(contaAtiva.diagnostico.simulacao_investimento.rendimento_liquido) : "R$ 189,07";
-      adicionarBolha(`Olá, ${escapar(primNome)}! Sou o Aplicaí, seu <b>Agente de Investimento e Liquidez</b>.<br><br>⚡ <b>Oportunidade Detectada:</b> Identifiquei <b>${livre}</b> ociosos na sua conta corrente rendendo 0%.<br><br>Sua <b>Reserva para Contas do Mês (${reserva})</b> já está protegida para cobrir todas as despesas e a fatura dos próximos 30 dias.<br><br>Sua liquidez excedente pode render <b>+${rend} líquidos por mês</b> no CDB Itaú 100% CDI com resgate diário. Deseja aplicar via iToken?`, "bot");
+      adicionarBolha(`Olá, ${escapar(primNome)}! Sou o Aplicaí, seu assistente para fazer a sobra do mês render sem faltar para as contas.<br><br>⚡ <b>Oportunidade Detectada:</b> Identifiquei <b>${livre}</b> parados na sua conta corrente rendendo 0%.<br><br>Sua <b>Reserva para Contas do Mês (${reserva})</b> já está protegida para cobrir todas as despesas e a fatura dos próximos 30 dias.<br><br>Sua liquidez excedente pode render <b>+${rend} líquidos por mês</b> no CDB Itaú 100% CDI com resgate diário. Deseja aplicar via iToken?`, "bot");
     } else {
       adicionarBolha(`Olá, ${escapar(primNome)}! Sou o Aplicaí, seu assistente para fazer a sobra do mês render sem faltar para as contas. Como posso te apoiar hoje?`, "bot");
     }
@@ -912,11 +912,11 @@ function atualizarSugestoesDrawer() {
   let sugestoes;
   if (contaAtiva?.diagnostico?.elegivel_investimento && contaAtiva?.diagnostico?.saldo_livre_efetivo >= 500) {
     sugestoes = [
-      "⚡ Aplicar excedente no CDB com iToken",
+      "⚡ Aplicar a sobra no CDB com iToken",
       "Como o agente calculou a Reserva de Contas?",
       "Qual o rendimento líquido descontando IOF e IR?",
       "O que acontece se eu precisar resgatar antes?",
-      "Quais contas estão blindadas na reserva do mês?"
+      "Quais contas estão reservadas para este mês?"
     ];
   } else {
     sugestoes = [
@@ -1017,7 +1017,7 @@ $("btn-parcelar-fatura-home").onclick = () => {
   dispararAcaoSmartCard({ tipo: "parcelar_fatura", n_parcelas: 3 });
 };
 
-// Navegação e Ação Rápida de Investimento Agêntico
+// Navegação e atalho para investir a sobra
 $("nav-investimentos").onclick = () => {
   const card = $("smart-card-gestor");
   card.scrollIntoView({ behavior: "smooth", block: "center" });

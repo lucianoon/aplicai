@@ -25,6 +25,7 @@ import math
 import os
 import secrets
 import time
+from datetime import date
 
 SEGREDO = os.getenv("COPILOTO_AUTH_SECRET") or secrets.token_hex(32)
 VALIDADE_CAPACIDADE_S = 60
@@ -68,7 +69,8 @@ def cotar(store, acao: str, cliente_id: str, args: dict) -> dict:
             # portão de suitability e colchão no caminho de execução: vale para agente, MCP e app
             saldo = store.get_fluxo_previsto(cliente_id)["saldo_atual"]
             renda = store.get_perfil(cliente_id)["renda_mensal"]
-            proj = MotorProjecaoCaixa.projetar(cliente_id, saldo, renda, store._cliente(cliente_id))
+            proj = MotorProjecaoCaixa.projetar(cliente_id, saldo, renda, store._cliente(cliente_id),
+                                           date.fromisoformat(store.hoje()))
             elegivel, motivo = PortaoRisco.avaliar_elegibilidade_investimento(proj)
             if not elegivel:
                 raise ValueError(motivo)

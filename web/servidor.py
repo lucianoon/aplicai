@@ -17,6 +17,7 @@ import os
 import secrets
 import sys
 import time
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -119,7 +120,7 @@ def calcular_diagnostico_cliente(cid: str) -> dict[str, Any]:
     raw = STORE._cliente(cid)
     saldo_atual = float(raw["saldo_conta"])
     renda_mensal = float(raw["renda_mensal"])
-    proj = MotorProjecaoCaixa.projetar(cid, saldo_atual, renda_mensal, raw)
+    proj = MotorProjecaoCaixa.projetar(cid, saldo_atual, renda_mensal, raw, date.fromisoformat(STORE.hoje()))
     aut_inv, mot_inv = PortaoRisco.avaliar_elegibilidade_investimento(proj)
     alivio_passivo = PortaoRisco.avaliar_necessidade_alivio_passivo(proj)
 

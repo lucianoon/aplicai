@@ -21,6 +21,7 @@ class TipoCompromisso(str, Enum):
     CONDOMINIO = "condominio"
     SEGURO_AUTO = "seguro_auto"
     ENERGIA_AGUA = "energia_agua"
+    ALUGUEL = "aluguel"
     FATURA_CARTAO = "fatura_cartao"
     OUTRO = "outro"
 
@@ -30,6 +31,7 @@ class CompromissoContratual(BaseModel):
     tipo: TipoCompromisso
     descricao: str
     dia_vencimento: int = Field(ge=1, le=31)
+    dias_ate_vencimento: int = Field(default=0, ge=0)
     valor_estimado: float = Field(gt=0)
     debito_automatico: bool = True
 

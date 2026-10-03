@@ -24,7 +24,7 @@ Dispositivo de voz com IA: conversa voz a voz em tempo real usando a OpenAI Real
 - [código pronto, falta testar no dispositivo] Wi-Fi + WebSocket: conectar ao backend e enviar áudio do mic em chunks de 20 ms (PCM16 24 kHz em base64)
 - [código pronto, falta testar no dispositivo] Sessão Realtime: `session.update` (voz, instruções, VAD do servidor) e reprodução com buffer circular
 - Interrupção (barge-in): parar a reprodução e cancelar a resposta quando o usuário falar
-- Expressividade: máquina de estados na tela (idle, ouvindo, pensando, falando)
+- [código pronto, falta testar no dispositivo] Expressividade: rosto na tela que pisca, olha e abre a boca com o áudio. O alvo visual é o rosto animado do post da Sophia; isto ainda é desenho 2D, não o vídeo 3D.
 - BLE de provisionamento e persistência em NVS
 - Polimento: reconexão automática, indicador de erro, medição de latência
 

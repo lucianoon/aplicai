@@ -7,6 +7,8 @@
 // Mic e speaker do CoreS3 dividem o I2S: um end() antes do begin() do outro.
 // Nada disto foi testado no dispositivo.
 
+#include "face.h"
+
 #include <M5Unified.h>
 #include <WebSocketsClient.h>
 #include <WiFi.h>
@@ -76,12 +78,14 @@ bool gSpeaking = false;
 bool gPlayEnd = false;
 bool gDiscardReady = false;
 char gState[16] = "ouvindo";
+uint8_t gMouth = 0;
 std::atomic<uint32_t> gAcks{0};
 uint32_t gSeq = 0;
 uint32_t gSendErrors = 0;
 uint32_t gInboxDrops = 0;
 uint32_t gPlayDrops = 0;
 uint32_t gLastUiMs = 0;
+uint32_t gLastMouthMs = 0;
 
 void* allocPsram(size_t bytes) {
   return heap_caps_malloc(bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -115,6 +119,7 @@ bool recordBlocking(int16_t* data, size_t samples, uint32_t rateHz) {
   }
   while (M5.Mic.isRecording()) {
     M5.update();
+    presenceShow(PresenceMood::Listening, 0);
     delay(1);
   }
   return true;
@@ -352,6 +357,11 @@ void pumpSpeaker() {
     int16_t* dest = gUsePlayA ? gPlayA : gPlayB;
     gUsePlayA = !gUsePlayA;
     ringRead(dest, count);
+    uint32_t level = rmsInt(dest, count);
+    if (level > 6000) {
+      level = 6000;
+    }
+    gMouth = static_cast<uint8_t>(level * 255 / 6000);
     if (!M5.Speaker.playRaw(dest, count, kSampleRateHz, false, 1, 0, false)) {
       ++gPlayDrops;
       break;
@@ -422,20 +432,41 @@ void queueEmptySlots() {
   }
 }
 
+PresenceMood currentMood() {
+  if (!gSocketReady || !gSocket.isConnected()) {
+    return PresenceMood::Thinking;
+  }
+  if (strcmp(gState, "falando") == 0 || gSpeaking) {
+    return PresenceMood::Speaking;
+  }
+  if (strcmp(gState, "pensando") == 0) {
+    return PresenceMood::Thinking;
+  }
+  return PresenceMood::Listening;
+}
+
 void refreshStreamUi() {
-  uint32_t now = millis();
-  if (now - gLastUiMs < 500) {
+  const uint32_t now = millis();
+  if (now - gLastMouthMs >= 40) {
+    gLastMouthMs = now;
+    if (gMouth > 28) {
+      gMouth -= 28;
+    } else {
+      gMouth = 0;
+    }
+  }
+  if (presenceReady()) {
+    presenceShow(currentMood(), gMouth);
+  } else if (!gSocket.isConnected()) {
+    showScreen("socket caiu", gState, TFT_RED);
+  }
+  if (now - gLastUiMs < 2000) {
     return;
   }
   gLastUiMs = now;
-  char line1[48];
-  char line2[64];
-  const bool up = gSocket.isConnected();
-  snprintf(line1, sizeof(line1), "%s", up ? gState : "socket caiu");
-  snprintf(line2, sizeof(line2), "seq %lu  fila %u  err %lu",
-           static_cast<unsigned long>(gSeq), static_cast<unsigned>(gRing.count),
-           static_cast<unsigned long>(gSendErrors + gInboxDrops + gPlayDrops));
-  showScreen(line1, line2, up ? TFT_GREEN : TFT_RED);
+  Serial.printf("estado %s seq %lu fila %u err %lu\n", gState,
+                static_cast<unsigned long>(gSeq), static_cast<unsigned>(gRing.count),
+                static_cast<unsigned long>(gSendErrors + gInboxDrops + gPlayDrops));
 }
 
 bool connectWifi() {
@@ -516,7 +547,7 @@ void runLoopback() {
   useMicrophone();
   while (true) {
     M5.update();
-    showScreen("gravando 3 s", "mic", TFT_RED);
+    presenceShow(PresenceMood::Listening, 0);
     uint32_t started = millis();
     bool ok = recordBlocking(buffer, kLoopbackSamples, kSampleRateHz);
     uint32_t elapsed = millis() - started;
@@ -531,11 +562,12 @@ void runLoopback() {
       continue;
     }
 
-    showScreen("tocando 3 s", "speaker", TFT_CYAN);
     useSpeaker();
     M5.Speaker.playRaw(buffer, kLoopbackSamples, kSampleRateHz, false, 1, 0);
     while (M5.Speaker.isPlaying()) {
       M5.update();
+      const uint8_t pulse = 70 + static_cast<uint8_t>((millis() / 90) % 2) * 150;
+      presenceShow(PresenceMood::Speaking, pulse);
       delay(1);
     }
     useMicrophone();
@@ -618,6 +650,7 @@ void setup() {
   }
   Serial.printf("PSRAM livre: %u bytes\n",
                 static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_SPIRAM)));
+  presenceBegin();
 
   if (chooseLoopback()) {
     runLoopback();

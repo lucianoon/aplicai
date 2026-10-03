@@ -15,6 +15,10 @@ from dataclasses import dataclass
 SAMPLE_RATE_HZ = 24_000
 CHUNK_MS = 20
 CHUNK_SAMPLES = SAMPLE_RATE_HZ * CHUNK_MS // 1000
+# O cliente WebSockets do firmware aceita no máximo 15 KB por quadro.
+# 8184 bytes de PCM viram base64 que cabe nesse limite, com a moldura JSON.
+MAX_PLAY_PCM_BYTES = 8184
+DEVICE_WS_TEXT_LIMIT = 15 * 1024
 
 
 class ProtocolError(ValueError):
@@ -90,3 +94,26 @@ def ack_payload(chunk: AudioChunk) -> dict:
         "samples": chunk.samples,
         "rms": round(rms(chunk.pcm), 2),
     }
+
+
+def play_frames(pcm: bytes) -> list[dict]:
+    if len(pcm) % 2 != 0:
+        raise ProtocolError("PCM16 precisa de número par de bytes")
+    frames = []
+    for offset in range(0, len(pcm), MAX_PLAY_PCM_BYTES):
+        piece = pcm[offset : offset + MAX_PLAY_PCM_BYTES]
+        encoded = base64.b64encode(piece).decode("ascii")
+        frames.append({"t": "play", "pcm": encoded})
+    return frames
+
+
+def play_end_message() -> dict:
+    return {"t": "play_end"}
+
+
+def state_message(name: str) -> dict:
+    return {"t": "state", "name": name}
+
+
+def error_message(reason: str) -> dict:
+    return {"t": "error", "reason": reason}

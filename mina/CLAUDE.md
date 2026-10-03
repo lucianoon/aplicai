@@ -22,7 +22,7 @@ Dispositivo de voz com IA: conversa voz a voz em tempo real usando a OpenAI Real
 
 - [código pronto, falta testar no dispositivo] Hello hardware: gravar 3 s pelo mic e reproduzir no speaker (`src/main.cpp`, toque na tela nos 2,5 s iniciais)
 - [código pronto, falta testar no dispositivo] Wi-Fi + WebSocket: conectar ao backend e enviar áudio do mic em chunks de 20 ms (PCM16 24 kHz em base64)
-- Sessão Realtime: `session.update` (voz, instruções, VAD do servidor) e reprodução com buffer circular
+- [código pronto, falta testar no dispositivo] Sessão Realtime: `session.update` (voz, instruções, VAD do servidor) e reprodução com buffer circular
 - Interrupção (barge-in): parar a reprodução e cancelar a resposta quando o usuário falar
 - Expressividade: máquina de estados na tela (idle, ouvindo, pensando, falando)
 - BLE de provisionamento e persistência em NVS

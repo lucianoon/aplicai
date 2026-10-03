@@ -1,9 +1,9 @@
-// Mina — hello de hardware e envio do microfone por WebSocket.
+// Mina — hello de hardware, envio do microfone e reprodução da resposta.
 //
 // Sem include/secrets.h o aparelho só faz o loopback de 3 s.
 // Com secrets.h, os primeiros 2,5 s aceitam um toque para o loopback;
 // sem toque, conecta no Wi-Fi e manda PCM16 24 kHz em blocos de 20 ms.
-//
+// Quadros {"t":"play"} entram num buffer circular e saem no speaker.
 // Mic e speaker do CoreS3 dividem o I2S: um end() antes do begin() do outro.
 // Nada disto foi testado no dispositivo.
 
@@ -35,6 +35,11 @@ constexpr uint32_t kLoopbackMs = 3000;
 constexpr size_t kLoopbackSamples = (kSampleRateHz * kLoopbackMs) / 1000;
 constexpr uint32_t kBootChoiceMs = 2500;
 constexpr int kSpeakerVolume = 100;
+constexpr size_t kRingSamples = kSampleRateHz * 3;
+constexpr size_t kInboxSlots = 6;
+// O WebSockets.h do firmware fixa 15 KB. O backend parte a resposta para caber.
+constexpr size_t kInboxBytes = 15 * 1024;
+constexpr size_t kPcmScratchBytes = 12 * 1024;
 
 struct CaptureSlot {
   int16_t* samples = nullptr;
@@ -42,13 +47,40 @@ struct CaptureSlot {
   std::atomic<bool> ready{false};
 };
 
+struct InboxSlot {
+  char* data = nullptr;
+  size_t len = 0;
+  std::atomic<bool> full{false};
+};
+
+struct SampleRing {
+  int16_t* data = nullptr;
+  size_t capacity = 0;
+  size_t read = 0;
+  size_t write = 0;
+  size_t count = 0;
+};
+
 CaptureSlot gSlots[2];
+InboxSlot gInbox[kInboxSlots];
+SampleRing gRing;
+int16_t* gPlayA = nullptr;
+int16_t* gPlayB = nullptr;
+bool gUsePlayA = true;
+uint8_t* gPcmScratch = nullptr;
 char* gFrame = nullptr;
 size_t gFrameCap = 0;
 WebSocketsClient gSocket;
+bool gSocketReady = false;
+bool gSpeaking = false;
+bool gPlayEnd = false;
+bool gDiscardReady = false;
+char gState[16] = "ouvindo";
 std::atomic<uint32_t> gAcks{0};
 uint32_t gSeq = 0;
 uint32_t gSendErrors = 0;
+uint32_t gInboxDrops = 0;
+uint32_t gPlayDrops = 0;
 uint32_t gLastUiMs = 0;
 
 void* allocPsram(size_t bytes) {
@@ -97,11 +129,72 @@ void useMicrophone() {
 
 void useSpeaker() {
   while (M5.Mic.isRecording()) {
+    if (gSocketReady) {
+      gSocket.loop();
+    }
     delay(1);
   }
   M5.Mic.end();
   M5.Speaker.begin();
   M5.Speaker.setVolume(kSpeakerVolume);
+}
+
+size_t ringWrite(const int16_t* src, size_t count) {
+  size_t room = gRing.capacity - gRing.count;
+  if (count > room) {
+    gPlayDrops += count - room;
+    count = room;
+  }
+  for (size_t i = 0; i < count; ++i) {
+    gRing.data[gRing.write] = src[i];
+    gRing.write = (gRing.write + 1) % gRing.capacity;
+  }
+  gRing.count += count;
+  return count;
+}
+
+void ringRead(int16_t* dst, size_t count) {
+  for (size_t i = 0; i < count; ++i) {
+    dst[i] = gRing.data[gRing.read];
+    gRing.read = (gRing.read + 1) % gRing.capacity;
+  }
+  gRing.count -= count;
+}
+
+bool extractQuoted(const char* json, size_t len, const char* key, const char** out,
+                   size_t* outLen) {
+  char pattern[24];
+  int written = snprintf(pattern, sizeof(pattern), "\"%s\":\"", key);
+  if (written < 0 || static_cast<size_t>(written) >= sizeof(pattern)) {
+    return false;
+  }
+  size_t patternLen = static_cast<size_t>(written);
+  const char* found = nullptr;
+  for (size_t i = 0; i + patternLen <= len; ++i) {
+    if (memcmp(json + i, pattern, patternLen) == 0) {
+      found = json + i + patternLen;
+      break;
+    }
+  }
+  if (found == nullptr) {
+    return false;
+  }
+  const char* end = found;
+  const char* limit = json + len;
+  while (end < limit && *end != '"') {
+    ++end;
+  }
+  if (end >= limit) {
+    return false;
+  }
+  *out = found;
+  *outLen = static_cast<size_t>(end - found);
+  return true;
+}
+
+bool sameToken(const char* text, size_t len, const char* literal) {
+  size_t n = strlen(literal);
+  return len == n && memcmp(text, literal, n) == 0;
 }
 
 uint32_t rmsInt(const int16_t* samples, size_t count) {
@@ -146,29 +239,35 @@ bool buildFrame(const int16_t* samples, size_t count, uint32_t seq, size_t* outL
   return true;
 }
 
-bool payloadHasAck(const uint8_t* payload, size_t length) {
-  static constexpr char kNeedle[] = "\"t\":\"ack\"";
-  constexpr size_t n = sizeof(kNeedle) - 1;
-  if (payload == nullptr || length < n) {
-    return false;
-  }
-  for (size_t i = 0; i + n <= length; ++i) {
-    if (memcmp(payload + i, kNeedle, n) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void onWsEvent(WStype_t type, uint8_t* payload, size_t length) {
-  if (type == WStype_TEXT && payloadHasAck(payload, length)) {
-    gAcks.fetch_add(1, std::memory_order_relaxed);
+  if (type != WStype_TEXT || payload == nullptr || length == 0) {
+    return;
   }
+  for (auto& slot : gInbox) {
+    if (slot.full.load(std::memory_order_acquire)) {
+      continue;
+    }
+    if (length >= kInboxBytes) {
+      ++gInboxDrops;
+      return;
+    }
+    memcpy(slot.data, payload, length);
+    slot.data[length] = '\0';
+    slot.len = length;
+    slot.full.store(true, std::memory_order_release);
+    return;
+  }
+  ++gInboxDrops;
 }
 
 void sendReadyChunks() {
   for (auto& slot : gSlots) {
     if (!slot.ready.load(std::memory_order_acquire)) {
+      continue;
+    }
+    if (gDiscardReady) {
+      slot.ready.store(false, std::memory_order_release);
+      slot.queued.store(false, std::memory_order_release);
       continue;
     }
     size_t frameLen = 0;
@@ -182,6 +281,130 @@ void sendReadyChunks() {
     }
     slot.ready.store(false, std::memory_order_release);
     slot.queued.store(false, std::memory_order_release);
+  }
+  gDiscardReady = false;
+}
+
+bool micStillQueued() {
+  for (auto& slot : gSlots) {
+    if (slot.queued.load(std::memory_order_acquire) &&
+        !slot.ready.load(std::memory_order_acquire)) {
+      return true;
+    }
+  }
+  return M5.Mic.isRecording() != 0;
+}
+
+void beginSpeaking() {
+  if (gSpeaking) {
+    return;
+  }
+  gSpeaking = true;
+  uint32_t start = millis();
+  while (micStillQueued() && millis() - start < 300) {
+    if (gSocketReady) {
+      gSocket.loop();
+    }
+    sendReadyChunks();
+    delay(1);
+  }
+  useSpeaker();
+  gDiscardReady = true;
+  snprintf(gState, sizeof(gState), "falando");
+  Serial.println("speaker: inicio da resposta");
+}
+
+void finishSpeaking() {
+  gPlayEnd = false;
+  gSpeaking = false;
+  gDiscardReady = true;
+  useMicrophone();
+  M5.Mic.setBufferReleaseCallback(nullptr, onBufferRelease);
+  snprintf(gState, sizeof(gState), "ouvindo");
+  Serial.println("mic: volta a ouvir");
+}
+
+void enqueuePcm(const char* b64, size_t b64Len) {
+  size_t decoded = 0;
+  int rc = mbedtls_base64_decode(gPcmScratch, kPcmScratchBytes, &decoded,
+                                 reinterpret_cast<const unsigned char*>(b64), b64Len);
+  if (rc != 0 || decoded < 2 || (decoded % 2) != 0) {
+    ++gPlayDrops;
+    return;
+  }
+  gPlayEnd = false;
+  if (!gSpeaking) {
+    beginSpeaking();
+  }
+  ringWrite(reinterpret_cast<int16_t*>(gPcmScratch), decoded / sizeof(int16_t));
+  snprintf(gState, sizeof(gState), "falando");
+}
+
+void pumpSpeaker() {
+  while (gRing.count > 0 && M5.Speaker.isPlaying(0) < 2) {
+    size_t count = gRing.count;
+    if (count < kChunkSamples && !gPlayEnd && M5.Speaker.isPlaying(0) > 0) {
+      break;
+    }
+    if (count > kChunkSamples) {
+      count = kChunkSamples;
+    }
+    int16_t* dest = gUsePlayA ? gPlayA : gPlayB;
+    gUsePlayA = !gUsePlayA;
+    ringRead(dest, count);
+    if (!M5.Speaker.playRaw(dest, count, kSampleRateHz, false, 1, 0, false)) {
+      ++gPlayDrops;
+      break;
+    }
+  }
+  if (gPlayEnd && gRing.count == 0 && !M5.Speaker.isPlaying()) {
+    finishSpeaking();
+  }
+}
+
+void handleText(const char* json, size_t len) {
+  const char* type = nullptr;
+  size_t typeLen = 0;
+  if (!extractQuoted(json, len, "t", &type, &typeLen)) {
+    return;
+  }
+  if (sameToken(type, typeLen, "ack")) {
+    gAcks.fetch_add(1, std::memory_order_relaxed);
+    return;
+  }
+  if (sameToken(type, typeLen, "play_end")) {
+    gPlayEnd = true;
+    return;
+  }
+  if (sameToken(type, typeLen, "play")) {
+    const char* pcm = nullptr;
+    size_t pcmLen = 0;
+    if (extractQuoted(json, len, "pcm", &pcm, &pcmLen)) {
+      enqueuePcm(pcm, pcmLen);
+    }
+    return;
+  }
+  if (sameToken(type, typeLen, "state")) {
+    const char* name = nullptr;
+    size_t nameLen = 0;
+    if (!gSpeaking && extractQuoted(json, len, "name", &name, &nameLen) &&
+        sameToken(name, nameLen, "thinking")) {
+      snprintf(gState, sizeof(gState), "pensando");
+    }
+    return;
+  }
+  if (sameToken(type, typeLen, "error")) {
+    Serial.println("erro do backend");
+  }
+}
+
+void drainInbox() {
+  for (auto& slot : gInbox) {
+    if (!slot.full.load(std::memory_order_acquire)) {
+      continue;
+    }
+    handleText(slot.data, slot.len);
+    slot.full.store(false, std::memory_order_release);
   }
 }
 
@@ -208,11 +431,10 @@ void refreshStreamUi() {
   char line1[48];
   char line2[64];
   const bool up = gSocket.isConnected();
-  snprintf(line1, sizeof(line1), "%s", up ? "ouvindo" : "socket caiu");
-  snprintf(line2, sizeof(line2), "seq %lu  ack %lu  err %lu",
-           static_cast<unsigned long>(gSeq),
-           static_cast<unsigned long>(gAcks.load(std::memory_order_relaxed)),
-           static_cast<unsigned long>(gSendErrors));
+  snprintf(line1, sizeof(line1), "%s", up ? gState : "socket caiu");
+  snprintf(line2, sizeof(line2), "seq %lu  fila %u  err %lu",
+           static_cast<unsigned long>(gSeq), static_cast<unsigned>(gRing.count),
+           static_cast<unsigned long>(gSendErrors + gInboxDrops + gPlayDrops));
   showScreen(line1, line2, up ? TFT_GREEN : TFT_RED);
 }
 
@@ -246,6 +468,7 @@ void connectSocket() {
   gSocket.begin(MINA_WS_HOST, MINA_WS_PORT, MINA_WS_PATH);
   gSocket.onEvent(onWsEvent);
   gSocket.setReconnectInterval(3000);
+  gSocketReady = true;
   Serial.printf("WebSocket ws://%s:%d%s\n", MINA_WS_HOST, MINA_WS_PORT, MINA_WS_PATH);
 #endif
 }
@@ -255,7 +478,13 @@ bool allocStreamBuffers() {
   const size_t b64Bytes = 4 * ((pcmBytes + 2) / 3) + 4;
   gFrameCap = 96 + b64Bytes;
   gFrame = static_cast<char*>(allocPsram(gFrameCap));
-  if (gFrame == nullptr) {
+  gRing.data = static_cast<int16_t*>(allocPsram(kRingSamples * sizeof(int16_t)));
+  gRing.capacity = kRingSamples;
+  gPlayA = static_cast<int16_t*>(allocPsram(pcmBytes));
+  gPlayB = static_cast<int16_t*>(allocPsram(pcmBytes));
+  gPcmScratch = static_cast<uint8_t*>(allocPsram(kPcmScratchBytes));
+  if (gFrame == nullptr || gRing.data == nullptr || gPlayA == nullptr || gPlayB == nullptr ||
+      gPcmScratch == nullptr) {
     return false;
   }
   for (auto& slot : gSlots) {
@@ -264,6 +493,12 @@ bool allocStreamBuffers() {
       return false;
     }
     memset(slot.samples, 0, pcmBytes);
+  }
+  for (auto& slot : gInbox) {
+    slot.data = static_cast<char*>(allocPsram(kInboxBytes));
+    if (slot.data == nullptr) {
+      return false;
+    }
   }
   return true;
 }
@@ -353,8 +588,13 @@ void runStream() {
   while (true) {
     M5.update();
     gSocket.loop();
-    sendReadyChunks();
-    queueEmptySlots();
+    drainInbox();
+    if (gSpeaking) {
+      pumpSpeaker();
+    } else {
+      sendReadyChunks();
+      queueEmptySlots();
+    }
     refreshStreamUi();
   }
 }

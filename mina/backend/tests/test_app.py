@@ -4,14 +4,16 @@ from mina_backend.app import app
 from mina_backend.protocol import CHUNK_SAMPLES, build_audio_frame
 
 
-def test_health():
+def test_health(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     client = TestClient(app)
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"ok": True}
+    assert response.json() == {"ok": True, "realtime": False}
 
 
-def test_websocket_acks_a_chunk_and_rejects_garbage():
+def test_websocket_acks_a_chunk_and_rejects_garbage(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     pcm = b"\x00\x00" * CHUNK_SAMPLES
     frame = build_audio_frame(pcm, seq=7)
     client = TestClient(app)
@@ -26,3 +28,4 @@ def test_websocket_acks_a_chunk_and_rejects_garbage():
         ws.send_text("nao-json")
         err = ws.receive_json()
         assert err["t"] == "error"
+        assert err["reason"] == "audio"

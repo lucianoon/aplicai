@@ -73,6 +73,10 @@ PYTHONPATH=../backend:. python -m mina_sim
 
 A página fica em `http://127.0.0.1:8765`. O backend continua em `ws://127.0.0.1:8000/v1/audio`.
 
+```bash
+PYTHONPATH=../backend:. python -m pytest -q
+```
+
 Os testes do contrato:
 
 ```bash

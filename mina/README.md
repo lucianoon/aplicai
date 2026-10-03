@@ -4,6 +4,10 @@ Experimento de voz no M5Stack CoreS3. Este passo grava pelo microfone e manda o 
 
 ## Verificação neste ambiente
 
+`pio run` concluiu com PlatformIO espressif32 7.1.3, M5Unified 0.2.25 e WebSockets 2.7.3. O binário usa 22960 bytes de RAM (7,0%) e 517493 bytes de flash (7,9%). O perfil de memória foi `qio_qspi`, o mesmo da PSRAM quad de 8 MB descrita na ficha do CoreS3.
+
+No backend, com o venv ativo, `pytest -q` passou 15 testes.
+
 O CoreS3 não foi gravado daqui. Loopback, Wi-Fi, a sessão Realtime e o speaker continuam sem confirmação no aparelho. No teste de 3 s, o serial imprime a duração da captura: o esperado em 24 kHz fica perto de 3000 ms.
 
 ## O que o firmware faz

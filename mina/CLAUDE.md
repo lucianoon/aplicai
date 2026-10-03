@@ -26,7 +26,7 @@ Dispositivo de voz com IA: conversa voz a voz em tempo real usando a OpenAI Real
 - [código pronto, falta testar no dispositivo] Interrupção por toque: para o speaker, esvazia o buffer e manda `{"t":"cancel"}`. O microfone continua desligado durante a fala, porque o I2S é half-duplex. O serial imprime a espera entre o `speech_stopped` do servidor e o primeiro áudio; isso não inclui o caminho do mic até o VAD.
 - [código pronto, falta testar no dispositivo] Expressividade: rosto na tela que pisca, olha e abre a boca com o áudio. O alvo visual é o rosto animado do post da Sophia; isto ainda é desenho 2D, não o vídeo 3D.
 - BLE de provisionamento e persistência em NVS
-- Polimento: reconexão automática, indicador de erro, medição de latência
+- [parcial, falta testar no dispositivo] Polimento: se o Wi-Fi cair, tenta de novo a cada 5 s. Erro do backend muda o rosto por 2,5 s. A espera até o primeiro áudio sai no serial. Falta a latência acústica de ponta a ponta.
 
 ## Comandos
 

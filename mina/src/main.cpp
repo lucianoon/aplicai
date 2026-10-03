@@ -1,4 +1,4 @@
-// NIRA — hello de hardware e envio do microfone por WebSocket.
+// Mina — hello de hardware e envio do microfone por WebSocket.
 //
 // Sem include/secrets.h o aparelho só faz o loopback de 3 s.
 // Com secrets.h, os primeiros 2,5 s aceitam um toque para o loopback;
@@ -21,9 +21,9 @@
 
 #if __has_include("secrets.h")
 #include "secrets.h"
-#define NIRA_HAS_SECRETS 1
+#define MINA_HAS_SECRETS 1
 #else
-#define NIRA_HAS_SECRETS 0
+#define MINA_HAS_SECRETS 0
 #endif
 
 namespace {
@@ -60,7 +60,7 @@ void showScreen(const char* line1, const char* line2, uint16_t accent) {
   M5.Display.setCursor(8, 16);
   M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
   M5.Display.setTextSize(3);
-  M5.Display.println("NIRA");
+  M5.Display.println("Mina");
   M5.Display.setTextSize(2);
   M5.Display.setTextColor(accent, TFT_BLACK);
   M5.Display.println(line1);
@@ -116,7 +116,7 @@ uint32_t rmsInt(const int16_t* samples, size_t count) {
   return static_cast<uint32_t>(sqrt(static_cast<double>(acc / count)));
 }
 
-// O texto tem de bater com build_audio_frame() em nira/backend.
+// O texto tem de bater com build_audio_frame() em mina/backend.
 bool buildFrame(const int16_t* samples, size_t count, uint32_t seq, size_t* outLen) {
   int header = snprintf(gFrame, gFrameCap,
                         "{\"t\":\"audio\",\"sr\":%u,\"n\":%u,\"seq\":%u,\"pcm\":\"",
@@ -217,16 +217,16 @@ void refreshStreamUi() {
 }
 
 bool connectWifi() {
-#if !NIRA_HAS_SECRETS
+#if !MINA_HAS_SECRETS
   return false;
 #else
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);
-  WiFi.begin(NIRA_WIFI_SSID, NIRA_WIFI_PASSWORD);
+  WiFi.begin(MINA_WIFI_SSID, MINA_WIFI_PASSWORD);
   uint32_t start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < 20000) {
     M5.update();
-    showScreen("conectando wi-fi", NIRA_WIFI_SSID, TFT_YELLOW);
+    showScreen("conectando wi-fi", MINA_WIFI_SSID, TFT_YELLOW);
     delay(200);
   }
   if (WiFi.status() != WL_CONNECTED) {
@@ -242,11 +242,11 @@ bool connectWifi() {
 }
 
 void connectSocket() {
-#if NIRA_HAS_SECRETS
-  gSocket.begin(NIRA_WS_HOST, NIRA_WS_PORT, NIRA_WS_PATH);
+#if MINA_HAS_SECRETS
+  gSocket.begin(MINA_WS_HOST, MINA_WS_PORT, MINA_WS_PATH);
   gSocket.onEvent(onWsEvent);
   gSocket.setReconnectInterval(3000);
-  Serial.printf("WebSocket ws://%s:%d%s\n", NIRA_WS_HOST, NIRA_WS_PORT, NIRA_WS_PATH);
+  Serial.printf("WebSocket ws://%s:%d%s\n", MINA_WS_HOST, MINA_WS_PORT, MINA_WS_PATH);
 #endif
 }
 
@@ -309,7 +309,7 @@ void runLoopback() {
 }
 
 bool chooseLoopback() {
-#if !NIRA_HAS_SECRETS
+#if !MINA_HAS_SECRETS
   showScreen("sem secrets.h", "so o teste do mic", TFT_YELLOW);
   Serial.println("include/secrets.h ausente: loopback de 3 s");
   delay(1200);

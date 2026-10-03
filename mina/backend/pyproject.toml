@@ -1,7 +1,7 @@
 [project]
-name = "nira-backend"
+name = "mina-backend"
 version = "0.1.0"
-description = "Receptor WebSocket do áudio do NIRA. Sem chamada à OpenAI."
+description = "Receptor WebSocket do áudio da Mina. Sem chamada à OpenAI."
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -21,4 +21,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["nira_backend*"]
+include = ["mina_backend*"]

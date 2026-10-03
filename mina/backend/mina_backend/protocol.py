@@ -1,6 +1,6 @@
 """Contrato do áudio que o firmware manda no WebSocket.
 
-O quadro JSON é o mesmo snprintf de nira/src/main.cpp. PCM16 little-endian,
+O quadro JSON é o mesmo snprintf de mina/src/main.cpp. PCM16 little-endian,
 24 kHz, um bloco por mensagem.
 """
 

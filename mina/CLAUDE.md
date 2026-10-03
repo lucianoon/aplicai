@@ -1,4 +1,4 @@
-# NIRA
+# Mina
 
 Dispositivo de voz com IA: conversa voz a voz em tempo real usando a OpenAI Realtime API, com presença física e respostas expressivas. Experimento inicial.
 

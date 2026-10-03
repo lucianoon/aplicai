@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
-from nira_backend.app import app
-from nira_backend.protocol import CHUNK_SAMPLES, build_audio_frame
+from mina_backend.app import app
+from mina_backend.protocol import CHUNK_SAMPLES, build_audio_frame
 
 
 def test_health():

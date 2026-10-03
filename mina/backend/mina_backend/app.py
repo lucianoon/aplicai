@@ -9,11 +9,11 @@ import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from nira_backend.protocol import ProtocolError, ack_payload, parse_audio_message
+from mina_backend.protocol import ProtocolError, ack_payload, parse_audio_message
 
-logger = logging.getLogger("nira.audio")
+logger = logging.getLogger("mina.audio")
 
-app = FastAPI(title="NIRA audio", version="0.1.0")
+app = FastAPI(title="Mina audio", version="0.1.0")
 
 
 @app.get("/health")

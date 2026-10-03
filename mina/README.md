@@ -1,4 +1,4 @@
-# NIRA
+# Mina
 
 Experimento de voz no M5Stack CoreS3. Este passo grava pelo microfone e manda o áudio para um backend na rede local. A OpenAI Realtime API ainda não entra, e nenhuma chave fica no firmware.
 
@@ -30,7 +30,7 @@ O backend responde `{"t":"ack","seq":1,"samples":480,"rms":0.0}`. A tela mostra 
 
 ## Firmware
 
-Na pasta `nira`:
+Na pasta `mina`:
 
 ```bash
 cp include/secrets.h.example include/secrets.h
@@ -46,14 +46,14 @@ pio device monitor
 O receptor só valida o quadro e devolve o ack. Não abre sessão na OpenAI.
 
 ```bash
-cd nira/backend
+cd mina/backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-uvicorn nira_backend.app:app --host 0.0.0.0 --port 8000
+uvicorn mina_backend.app:app --host 0.0.0.0 --port 8000
 ```
 
-O CoreS3 precisa alcançar o IP da máquina na porta 8000. `NIRA_WS_HOST` em `secrets.h` é esse IP.
+O CoreS3 precisa alcançar o IP da máquina na porta 8000. `MINA_WS_HOST` em `secrets.h` é esse IP.
 
 Os testes do contrato:
 

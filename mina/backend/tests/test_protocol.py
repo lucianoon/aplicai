@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from nira_backend.protocol import (
+from mina_backend.protocol import (
     CHUNK_MS,
     CHUNK_SAMPLES,
     SAMPLE_RATE_HZ,

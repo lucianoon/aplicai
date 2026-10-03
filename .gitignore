@@ -15,3 +15,4 @@ mock_core/lembretes.json
 nira/.pio/
 nira/include/secrets.h
 nira/backend/.venv/
+nira/backend/**/*.egg-info/

@@ -1,0 +1,7 @@
+.pio/
+.vscode/
+include/secrets.h
+backend/.venv/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/**/*.egg-info/

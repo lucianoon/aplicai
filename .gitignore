@@ -12,3 +12,6 @@ eval/.adk_eval_history/
 *.evalset_results.json
 mock_core/consentimentos.json
 mock_core/lembretes.json
+nira/.pio/
+nira/include/secrets.h
+nira/backend/.venv/

@@ -59,6 +59,20 @@ uvicorn mina_backend.app:app --host 0.0.0.0 --port 8000
 
 O CoreS3 precisa alcançar o IP da máquina na porta 8000. `MINA_WS_HOST` em `secrets.h` é esse IP. Voz, modelo e instruções saem de `MINA_REALTIME_VOICE`, `MINA_REALTIME_MODEL` e `MINA_REALTIME_INSTRUCTIONS`. O exemplo está em `.env.example`.
 
+## Simulador no computador
+
+Não executa o firmware e não é o CoreS3. Abre uma página que desenha o mesmo rosto e fala o mesmo protocolo, usando o microfone e o speaker desta máquina. Sem o backend, o tom de 3 s ainda toca localmente. Um clique no rosto interrompe.
+
+```bash
+cd mina/sim
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+PYTHONPATH=../backend:. python -m mina_sim
+```
+
+A página fica em `http://127.0.0.1:8765`. O backend continua em `ws://127.0.0.1:8000/v1/audio`.
+
 Os testes do contrato:
 
 ```bash

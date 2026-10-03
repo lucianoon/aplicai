@@ -30,6 +30,7 @@ Dispositivo de voz com IA: conversa voz a voz em tempo real usando a OpenAI Real
 
 ## Comandos
 
+- Simulador no computador (não é o CoreS3): `cd mina/sim && PYTHONPATH=../backend:. python -m mina_sim` e abrir `http://127.0.0.1:8765`
 - Build: `pio run`
 - Upload: `pio run -t upload`
 - Monitor serial: `pio device monitor`

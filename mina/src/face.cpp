@@ -56,8 +56,16 @@ void drawFace(PresenceMood mood, uint8_t mouth) {
   const bool rest = mood != PresenceMood::Speaking && (now % 9000) > 8600;
   const bool closed = blink || rest;
   const int lookX = mood == PresenceMood::Thinking ? -sx(4, w) : 0;
-  const int lookY = mood == PresenceMood::Thinking ? -sy(3, h) : 0;
+  const int lookY = mood == PresenceMood::Error ? sy(3, h) : mood == PresenceMood::Thinking ? -sy(3, h) : 0;
   const int eyeY = cy - sy(12, h);
+  if (mood == PresenceMood::Error) {
+    const uint16_t brow = gCanvas.color565(90, 40, 50);
+    const int browY = eyeY - sy(16, h);
+    gCanvas.drawLine(cx - sx(28, w), browY - sy(4, h), cx - sx(6, w), browY + sy(3, h), brow);
+    gCanvas.drawLine(cx - sx(28, w), browY - sy(3, h), cx - sx(6, w), browY + sy(4, h), brow);
+    gCanvas.drawLine(cx + sx(6, w), browY + sy(3, h), cx + sx(28, w), browY - sy(4, h), brow);
+    gCanvas.drawLine(cx + sx(6, w), browY + sy(4, h), cx + sx(28, w), browY - sy(3, h), brow);
+  }
   const int eyeRy = closed ? 2 : sy(8, h);
   drawEye(cx - sx(16, w), eyeY, sx(11, w), eyeRy, lookX, lookY, closed);
   drawEye(cx + sx(16, w), eyeY, sx(11, w), eyeRy, lookX, lookY, closed);

@@ -76,6 +76,9 @@ def test_device_messages_for_turn_boundaries_and_errors():
         {"t": "state", "name": "thinking"}
     ]
     assert device_messages({"type": "response.output_audio.done"}) == [{"t": "play_end"}]
+    assert device_messages({"type": "input_audio_buffer.speech_stopped"}) == [
+        {"t": "state", "name": "heard"}
+    ]
     assert device_messages({"type": "response.output_audio.delta", "delta": "!!!!"}) == []
     reason = public_error_reason(
         {"type": "error", "error": {"code": "invalid_api_key", "message": "sk-secret"}}
@@ -184,6 +187,65 @@ async def _bridge_scenario() -> None:
     kinds = [item["t"] for item in device.outgoing]
     assert kinds == ["ack", "state", "play", "play_end"]
     assert device.outgoing[2]["pcm"] == base64.b64encode(b"\x02\x00").decode("ascii")
+
+    device.close()
+    upstream.close()
+    await asyncio.wait_for(task, timeout=2)
+
+
+def test_bridge_cancel_drops_the_rest_of_the_response():
+    asyncio.run(_cancel_scenario())
+
+
+async def _cancel_scenario() -> None:
+    device = FakeDevice()
+    upstream = FakeUpstream()
+    task = asyncio.create_task(run_bridge(device, _settings(), upstream))
+    await upstream.wait_sent(1)
+
+    upstream.push({"type": "session.updated", "session": {}})
+    upstream.push({"type": "response.created"})
+    upstream.push(
+        {
+            "type": "response.output_audio.delta",
+            "delta": base64.b64encode(b"\x02\x00").decode("ascii"),
+        }
+    )
+    for _ in range(20):
+        await asyncio.sleep(0)
+        if any(item["t"] == "play" for item in device.outgoing):
+            break
+
+    device.push('{"t":"cancel"}')
+    await upstream.wait_sent(2)
+    assert upstream.sent[-1]["type"] == "response.cancel"
+
+    upstream.push(
+        {
+            "type": "response.output_audio.delta",
+            "delta": base64.b64encode(b"\x03\x00").decode("ascii"),
+        }
+    )
+    upstream.push({"type": "response.output_audio.done"})
+    upstream.push({"type": "response.done", "response": {"status": "cancelled"}})
+    upstream.push({"type": "response.created"})
+    upstream.push(
+        {
+            "type": "response.output_audio.delta",
+            "delta": base64.b64encode(b"\x04\x00").decode("ascii"),
+        }
+    )
+    for _ in range(30):
+        await asyncio.sleep(0)
+        plays = [item["pcm"] for item in device.outgoing if item["t"] == "play"]
+        if base64.b64encode(b"\x04\x00").decode("ascii") in plays:
+            break
+
+    plays = [item["pcm"] for item in device.outgoing if item["t"] == "play"]
+    assert base64.b64encode(b"\x02\x00").decode("ascii") in plays
+    assert base64.b64encode(b"\x03\x00").decode("ascii") not in plays
+    assert plays[-1] == base64.b64encode(b"\x04\x00").decode("ascii")
+    assert any(item["t"] == "cancelled" for item in device.outgoing)
 
     device.close()
     upstream.close()

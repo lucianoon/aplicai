@@ -117,3 +117,15 @@ def state_message(name: str) -> dict:
 
 def error_message(reason: str) -> dict:
     return {"t": "error", "reason": reason}
+
+
+def is_cancel_message(text: str) -> bool:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return False
+    return isinstance(payload, dict) and payload.get("t") == "cancel"
+
+
+def cancelled_message() -> dict:
+    return {"t": "cancelled"}

@@ -10,6 +10,8 @@ from mina_backend.protocol import (
     ProtocolError,
     ack_payload,
     build_audio_frame,
+    cancelled_message,
+    is_cancel_message,
     parse_audio_message,
     rms,
 )
@@ -63,3 +65,10 @@ def test_rejects_length_mismatch():
 def test_rejects_other_type():
     with pytest.raises(ProtocolError):
         parse_audio_message('{"t":"ping"}')
+
+
+def test_cancel_message_is_not_audio():
+    assert is_cancel_message('{"t":"cancel"}')
+    assert not is_cancel_message('{"t":"audio"}')
+    assert not is_cancel_message("nao-json")
+    assert cancelled_message() == {"t": "cancelled"}

@@ -11,7 +11,14 @@ import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from mina_backend.protocol import ProtocolError, ack_payload, error_message, parse_audio_message
+from mina_backend.protocol import (
+    ProtocolError,
+    ack_payload,
+    cancelled_message,
+    error_message,
+    is_cancel_message,
+    parse_audio_message,
+)
 from mina_backend.realtime import RealtimeSettings, connect_openai, run_bridge
 
 logger = logging.getLogger("mina.audio")
@@ -29,6 +36,9 @@ async def ack_only(ws: WebSocket) -> None:
     try:
         while True:
             text = await ws.receive_text()
+            if is_cancel_message(text):
+                await ws.send_json(cancelled_message())
+                continue
             try:
                 chunk = parse_audio_message(text)
             except ProtocolError:

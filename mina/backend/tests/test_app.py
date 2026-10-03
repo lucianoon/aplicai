@@ -29,3 +29,6 @@ def test_websocket_acks_a_chunk_and_rejects_garbage(monkeypatch):
         err = ws.receive_json()
         assert err["t"] == "error"
         assert err["reason"] == "audio"
+
+        ws.send_text('{"t":"cancel"}')
+        assert ws.receive_json() == {"t": "cancelled"}

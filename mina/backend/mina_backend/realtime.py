@@ -21,7 +21,9 @@ from starlette.websockets import WebSocketDisconnect
 from mina_backend.protocol import (
     ProtocolError,
     ack_payload,
+    cancelled_message,
     error_message,
+    is_cancel_message,
     parse_audio_message,
     play_end_message,
     play_frames,
@@ -95,6 +97,10 @@ def append_audio_event(pcm: bytes) -> dict:
     }
 
 
+def cancel_response_event() -> dict:
+    return {"type": "response.cancel"}
+
+
 def public_error_reason(event: dict) -> str:
     err = event.get("error")
     code = ""
@@ -124,6 +130,8 @@ def device_messages(event: object) -> list[dict]:
         return [play_end_message()]
     if kind == "response.created":
         return [state_message("thinking")]
+    if kind == "input_audio_buffer.speech_stopped":
+        return [state_message("heard")]
     if kind == "error":
         return [error_message(public_error_reason(event))]
     return []
@@ -144,6 +152,7 @@ async def run_bridge(device, settings: RealtimeSettings, upstream: Upstream) -> 
     send_lock = asyncio.Lock()
     ready = asyncio.Event()
     buffered: list[bytes] = []
+    drop_audio = False
 
     async def send_upstream(payload: dict) -> None:
         await upstream.send(json.dumps(payload, separators=(",", ":")))
@@ -154,6 +163,13 @@ async def run_bridge(device, settings: RealtimeSettings, upstream: Upstream) -> 
         try:
             while True:
                 text = await device.receive_text()
+                if is_cancel_message(text):
+                    nonlocal drop_audio
+                    async with send_lock:
+                        drop_audio = True
+                        await send_upstream(cancel_response_event())
+                    await device.send_json(cancelled_message())
+                    continue
                 try:
                     chunk = parse_audio_message(text)
                 except ProtocolError:
@@ -178,14 +194,27 @@ async def run_bridge(device, settings: RealtimeSettings, upstream: Upstream) -> 
                 event = json.loads(raw)
             except json.JSONDecodeError:
                 continue
+            suppress_audio = False
             async with send_lock:
-                if isinstance(event, dict) and event.get("type") == "session.updated":
+                nonlocal drop_audio
+                kind = event.get("type") if isinstance(event, dict) else None
+                if kind == "session.updated":
                     ready.set()
                     queued = list(buffered)
                     buffered.clear()
                     for pcm in queued:
                         await send_upstream(append_audio_event(pcm))
+                if kind == "response.created":
+                    drop_audio = False
+                suppress_audio = drop_audio and kind in {
+                    "response.output_audio.delta",
+                    "response.output_audio.done",
+                }
+                if drop_audio and kind in {"response.done", "response.cancelled"}:
+                    drop_audio = False
             for message in device_messages(event):
+                if suppress_audio and message.get("t") in {"play", "play_end"}:
+                    continue
                 await device.send_json(message)
 
     device_task = asyncio.create_task(from_device())

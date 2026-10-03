@@ -21,7 +21,7 @@ Nos primeiros 2,5 s a tela pede um toque.
 
 Mic e speaker alternam. Os buffers saem de `heap_caps_malloc` com `MALLOC_CAP_SPIRAM`.
 
-Na tela, um rosto 2D pisca, olha para o lado enquanto espera a resposta e abre a boca com o volume do áudio. O alvo é o rosto animado do vídeo da Sophia; este desenho não reproduz aquele 3D.
+Na tela, um rosto 2D pisca, olha para o lado enquanto espera a resposta e abre a boca com o volume do áudio. O alvo é o rosto animado do vídeo da Sophia; este desenho não reproduz aquele 3D. Um toque durante a fala para o speaker e cancela a resposta. Um erro do backend deixa o rosto preocupado por alguns segundos.
 
 Cada bloco é um texto:
 

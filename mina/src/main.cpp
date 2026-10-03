@@ -5,6 +5,7 @@
 // sem toque, conecta no Wi-Fi e manda PCM16 24 kHz em blocos de 20 ms.
 // Quadros {"t":"play"} entram num buffer circular e saem no speaker.
 // Mic e speaker do CoreS3 dividem o I2S: um end() antes do begin() do outro.
+// Por isso a interrupção é um toque na tela, não o microfone durante a fala.
 // Nada disto foi testado no dispositivo.
 
 #include "face.h"
@@ -77,8 +78,15 @@ bool gSocketReady = false;
 bool gSpeaking = false;
 bool gPlayEnd = false;
 bool gDiscardReady = false;
+bool gIgnorePlay = false;
+bool gLatencyPending = false;
+bool gTouchHeld = false;
 char gState[16] = "ouvindo";
+char gErrorReason[41] = "";
 uint8_t gMouth = 0;
+uint32_t gHeardMs = 0;
+uint32_t gErrorUntil = 0;
+uint32_t gWifiRetryMs = 0;
 std::atomic<uint32_t> gAcks{0};
 uint32_t gSeq = 0;
 uint32_t gSendErrors = 0;
@@ -156,6 +164,12 @@ size_t ringWrite(const int16_t* src, size_t count) {
   }
   gRing.count += count;
   return count;
+}
+
+void clearRing() {
+  gRing.read = 0;
+  gRing.write = 0;
+  gRing.count = 0;
 }
 
 void ringRead(int16_t* dst, size_t count) {
@@ -329,6 +343,31 @@ void finishSpeaking() {
   Serial.println("mic: volta a ouvir");
 }
 
+void dropPlayback() {
+  gIgnorePlay = true;
+  gLatencyPending = false;
+  gMouth = 0;
+  if (gRing.data != nullptr) {
+    clearRing();
+  }
+  if (M5.Speaker.isEnabled()) {
+    M5.Speaker.stop();
+  }
+  if (gSpeaking) {
+    finishSpeaking();
+  } else {
+    snprintf(gState, sizeof(gState), "ouvindo");
+  }
+}
+
+void interruptByTouch() {
+  dropPlayback();
+  if (gSocket.isConnected()) {
+    gSocket.sendTXT("{\"t\":\"cancel\"}");
+  }
+  Serial.println("interrupcao por toque");
+}
+
 void enqueuePcm(const char* b64, size_t b64Len) {
   size_t decoded = 0;
   int rc = mbedtls_base64_decode(gPcmScratch, kPcmScratchBytes, &decoded,
@@ -382,14 +421,30 @@ void handleText(const char* json, size_t len) {
     gAcks.fetch_add(1, std::memory_order_relaxed);
     return;
   }
+  if (sameToken(type, typeLen, "cancelled")) {
+    dropPlayback();
+    return;
+  }
   if (sameToken(type, typeLen, "play_end")) {
+    if (gIgnorePlay) {
+      return;
+    }
     gPlayEnd = true;
     return;
   }
   if (sameToken(type, typeLen, "play")) {
+    if (gIgnorePlay) {
+      return;
+    }
     const char* pcm = nullptr;
     size_t pcmLen = 0;
     if (extractQuoted(json, len, "pcm", &pcm, &pcmLen)) {
+      if (gLatencyPending) {
+        Serial.printf(
+            "espera depois do fim de fala detectado: %lu ms\n",
+            static_cast<unsigned long>(millis() - gHeardMs));
+        gLatencyPending = false;
+      }
       enqueuePcm(pcm, pcmLen);
     }
     return;
@@ -397,14 +452,34 @@ void handleText(const char* json, size_t len) {
   if (sameToken(type, typeLen, "state")) {
     const char* name = nullptr;
     size_t nameLen = 0;
-    if (!gSpeaking && extractQuoted(json, len, "name", &name, &nameLen) &&
-        sameToken(name, nameLen, "thinking")) {
-      snprintf(gState, sizeof(gState), "pensando");
+    if (!extractQuoted(json, len, "name", &name, &nameLen)) {
+      return;
+    }
+    if (sameToken(name, nameLen, "thinking")) {
+      gIgnorePlay = false;
+      if (!gSpeaking) {
+        snprintf(gState, sizeof(gState), "pensando");
+      }
+      return;
+    }
+    if (sameToken(name, nameLen, "heard")) {
+      gHeardMs = millis();
+      gLatencyPending = true;
     }
     return;
   }
   if (sameToken(type, typeLen, "error")) {
-    Serial.println("erro do backend");
+    const char* reason = nullptr;
+    size_t reasonLen = 0;
+    if (extractQuoted(json, len, "reason", &reason, &reasonLen) && reasonLen > 0) {
+      size_t copy = reasonLen < sizeof(gErrorReason) - 1 ? reasonLen : sizeof(gErrorReason) - 1;
+      memcpy(gErrorReason, reason, copy);
+      gErrorReason[copy] = '\0';
+    } else {
+      snprintf(gErrorReason, sizeof(gErrorReason), "erro");
+    }
+    gErrorUntil = millis() + 2500;
+    Serial.printf("erro do backend: %s\n", gErrorReason);
   }
 }
 
@@ -433,6 +508,9 @@ void queueEmptySlots() {
 }
 
 PresenceMood currentMood() {
+  if (millis() < gErrorUntil) {
+    return PresenceMood::Error;
+  }
   if (!gSocketReady || !gSocket.isConnected()) {
     return PresenceMood::Thinking;
   }
@@ -491,6 +569,21 @@ bool connectWifi() {
   Serial.println(WiFi.localIP());
   showScreen("wi-fi ok", WiFi.localIP().toString().c_str(), TFT_GREEN);
   return true;
+#endif
+}
+
+void keepWifi() {
+#if MINA_HAS_SECRETS
+  if (WiFi.status() == WL_CONNECTED) {
+    return;
+  }
+  const uint32_t now = millis();
+  if (now - gWifiRetryMs < 5000) {
+    return;
+  }
+  gWifiRetryMs = now;
+  Serial.println("Wi-Fi caiu, reconectando");
+  WiFi.reconnect();
 #endif
 }
 
@@ -566,6 +659,11 @@ void runLoopback() {
     M5.Speaker.playRaw(buffer, kLoopbackSamples, kSampleRateHz, false, 1, 0);
     while (M5.Speaker.isPlaying()) {
       M5.update();
+      if (M5.Touch.getCount() > 0) {
+        M5.Speaker.stop();
+        Serial.println("loopback interrompido por toque");
+        break;
+      }
       const uint8_t pulse = 70 + static_cast<uint8_t>((millis() / 90) % 2) * 150;
       presenceShow(PresenceMood::Speaking, pulse);
       delay(1);
@@ -619,6 +717,12 @@ void runStream() {
 
   while (true) {
     M5.update();
+    const bool touched = M5.Touch.getCount() > 0;
+    if (touched && !gTouchHeld && (gSpeaking || strcmp(gState, "pensando") == 0)) {
+      interruptByTouch();
+    }
+    gTouchHeld = touched;
+    keepWifi();
     gSocket.loop();
     drainInbox();
     if (gSpeaking) {

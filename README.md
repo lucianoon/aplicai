@@ -170,4 +170,6 @@ Se o app já rodou antes, regenere os dados para incluir o perfil de investidor 
 
 ## 7. Licença e limites
 
+Licença MIT. Consulte o arquivo [LICENSE](LICENSE).
+
 Protótipo da Batalha de Agentes Itaú + Google; não é produto do Itaú. Clientes e valores são fictícios e gerados de forma determinística; taxas são ilustrativas; o banco e o encaminhamento humano são simulados.

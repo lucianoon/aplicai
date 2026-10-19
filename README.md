@@ -2,7 +2,7 @@
 
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Google ADK 2.x](https://img.shields.io/badge/Google_ADK-2.x-orange.svg)](https://github.com/google/agent-development-kit)
-[![Tests](https://img.shields.io/badge/tests-156%20passed-brightgreen.svg)](https://pytest.org)
+[![CI](https://github.com/lucianoon/aplicai/actions/workflows/ci.yml/badge.svg)](https://github.com/lucianoon/aplicai/actions/workflows/ci.yml)
 [![Inspirado em](https://img.shields.io/badge/inspirado%20em-LGPD%20%7C%20CVM%2030%20%7C%20Lei%2014.181-darkblue.svg)](#3-guardrails-e-ia-responsável)
 
 > **Solução desenvolvida para a Batalha de Agentes (Itaú Unibanco + Google).**

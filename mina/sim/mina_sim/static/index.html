@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mina no computador</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #070910;
+      color: #e8eef8;
+      font: 16px/1.4 "Segoe UI", sans-serif;
+    }
+    main { width: min(640px, 100%); padding: 24px; }
+    h1 { font-size: 28px; margin: 0 0 4px; }
+    .lede { margin: 0 0 16px; color: #9eb0c8; }
+    .bezel {
+      background: #141820;
+      border-radius: 28px;
+      padding: 18px;
+      box-shadow: 0 0 0 8px #1c2430, 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+      background: #061024;
+      border-radius: 8px;
+      cursor: pointer;
+      display: block;
+    }
+    #status { font-size: 20px; margin: 14px 0 0; }
+    #note { min-height: 1.4em; color: #9eb0c8; margin: 4px 0 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      background: #1c2430;
+      color: #e8eef8;
+      border: 1px solid #3a4a60;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button:hover { border-color: #46dce6; }
+    #log {
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+      color: #7f90a8;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mina</h1>
+    <p class="lede">Simulador neste computador. O microfone e o speaker são os da máquina, não os do CoreS3.</p>
+    <div class="bezel">
+      <canvas id="face" width="640" height="480" title="Clique para interromper"></canvas>
+    </div>
+    <p id="status" data-mood="thinking">conectando</p>
+    <p id="note"></p>
+    <div class="row">
+      <button id="mic" type="button">Ligar microfone</button>
+      <button id="record" type="button">Gravar 3 s</button>
+      <button id="tone" type="button">Tom de 3 s</button>
+    </div>
+    <ul id="log"></ul>
+  </main>
+  <script>
+    const WS_PORT = __WS_PORT__;
+    const canvas = document.getElementById("face");
+    const ctx = canvas.getContext("2d");
+    const statusEl = document.getElementById("status");
+    const noteEl = document.getElementById("note");
+    const logEl = document.getElementById("log");
+    let mood = "thinking";
+    let mouth = 0;
+    let micWanted = false;
+    let ws;
+    let audio;
+    let playTime = 0;
+    const sources = new Set();
+
+    function sx(v) { return v * 2; }
+    function sy(v) { return v * 2; }
+
+    function drawEye(x, y, rx, ry, lookX, lookY, closed) {
+      if (closed || ry < 2) {
+        roundRect(x - rx, y - 2, rx * 2, 6, 2, "rgb(40,24,32)");
+        return;
+      }
+      ellipse(x, y, rx, ry, "rgb(236,244,248)");
+      ellipse(x + lookX, y + lookY, Math.max(2, rx / 3), Math.max(2, rx / 3), "rgb(20,40,70)");
+      ellipse(x + lookX - rx / 6, y + lookY - ry / 5, 2, 2, "#fff");
+    }
+
+    function ellipse(x, y, rx, ry, color) {
+      ctx.beginPath();
+      ctx.ellipse(x, y, Math.max(1, rx), Math.max(1, ry), 0, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function roundRect(x, y, w, h, r, color) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawFace(now) {
+      const w = 640;
+      const h = 480;
+      ctx.fillStyle = "rgb(6,16,36)";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "rgb(12,48,72)";
+      for (let x = 0; x < w; x += sx(14)) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += sy(14)) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      const cx = w / 2;
+      const cy = sy(118);
+      roundRect(cx - sx(78), cy + sy(28), sx(156), sy(90), sx(24), "rgb(18,28,42)");
+      ctx.strokeStyle = "rgb(70,220,230)";
+      ctx.strokeRect(cx - sx(78), cy + sy(28), sx(156), sy(90));
+      ctx.fillStyle = "rgb(232,186,164)";
+      ctx.fillRect(cx - sx(14), cy + sy(18), sx(28), sy(22));
+      ellipse(cx, cy - sy(6), sx(48), sy(56), "rgb(232,186,164)");
+      ellipse(cx, cy - sy(34), sx(50), sy(34), "rgb(18,16,24)");
+      roundRect(cx - sx(50), cy - sy(24), sx(18), sy(58), sx(8), "rgb(18,16,24)");
+      roundRect(cx + sx(32), cy - sy(24), sx(18), sy(58), sx(8), "rgb(18,16,24)");
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - sy(6), sx(48), sy(56), 0, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgb(70,220,230)";
+      ctx.stroke();
+
+      const blink = (now % 3400) < 130;
+      const rest = mood !== "speaking" && (now % 9000) > 8600;
+      const closed = blink || rest;
+      const lookX = mood === "thinking" ? -sx(4) : 0;
+      const lookY = mood === "error" ? sy(3) : mood === "thinking" ? -sy(3) : 0;
+      const eyeY = cy - sy(12);
+      if (mood === "error") {
+        ctx.strokeStyle = "rgb(90,40,50)";
+        ctx.lineWidth = 2;
+        const browY = eyeY - sy(16);
+        ctx.beginPath();
+        ctx.moveTo(cx - sx(28), browY - sy(4));
+        ctx.lineTo(cx - sx(6), browY + sy(3));
+        ctx.moveTo(cx + sx(6), browY + sy(3));
+        ctx.lineTo(cx + sx(28), browY - sy(4));
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+      const eyeRy = closed ? 2 : sy(8);
+      drawEye(cx - sx(16), eyeY, sx(11), eyeRy, lookX, lookY, closed);
+      drawEye(cx + sx(16), eyeY, sx(11), eyeRy, lookX, lookY, closed);
+      let mouthH = sy(3);
+      if (mood === "speaking") mouthH = sy(3) + (mouth * sy(16)) / 255;
+      const mouthY = cy + sy(18);
+      ellipse(cx, mouthY, sx(11), mouthH, "rgb(120,48,58)");
+      ctx.beginPath();
+      ctx.ellipse(cx, mouthY, sx(12), mouthH + 2, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgb(90,40,50)";
+      ctx.stroke();
+    }
+
+    function frame() {
+      drawFace(performance.now());
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    function audioCtx() {
+      if (!audio) audio = new AudioContext();
+      return audio;
+    }
+
+    function stopAudio() {
+      for (const node of sources) {
+        try { node.stop(); } catch (err) { /* já parou */ }
+      }
+      sources.clear();
+      playTime = 0;
+    }
+
+    function playPcm(buf) {
+      const view = new DataView(buf);
+      const gen = view.getUint32(0, true);
+      const pcm = new Int16Array(buf, 4);
+      const floats = new Float32Array(pcm.length);
+      for (let i = 0; i < pcm.length; i += 1) floats[i] = pcm[i] / 32768;
+      const sound = audioCtx();
+      const buffer = sound.createBuffer(1, floats.length, 24000);
+      buffer.copyToChannel(floats, 0);
+      const node = sound.createBufferSource();
+      node.buffer = buffer;
+      node.connect(sound.destination);
+      const start = Math.max(sound.currentTime + 0.02, playTime);
+      node.start(start);
+      playTime = start + buffer.duration;
+      sources.add(node);
+      node.onended = () => {
+        sources.delete(node);
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ t: "played", bytes: pcm.length * 2, gen }));
+        }
+      };
+    }
+
+    function connect() {
+      ws = new WebSocket(`ws://${location.hostname}:${WS_PORT}`);
+      ws.binaryType = "arraybuffer";
+      ws.onmessage = (event) => {
+        if (typeof event.data === "string") {
+          const message = JSON.parse(event.data);
+          if (message.t === "stop") {
+            stopAudio();
+            return;
+          }
+          if (message.t !== "face") return;
+          mood = message.mood;
+          mouth = message.mouth;
+          micWanted = Boolean(message.mic);
+          statusEl.textContent = message.status;
+          statusEl.dataset.mood = message.mood;
+          noteEl.textContent = message.note || "";
+          logEl.replaceChildren();
+          for (const line of message.logs || []) {
+            const item = document.createElement("li");
+            item.textContent = line;
+            logEl.appendChild(item);
+          }
+          return;
+        }
+        try {
+          playPcm(event.data);
+        } catch (err) {
+          noteEl.textContent = "não deu para tocar o áudio";
+        }
+      };
+      ws.onclose = () => {
+        statusEl.textContent = "página sem o simulador";
+        setTimeout(connect, 1000);
+      };
+    }
+    connect();
+
+    let micNode;
+    async function enableMic() {
+      const sound = audioCtx();
+      await sound.resume();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const source = sound.createMediaStreamSource(stream);
+      const processor = sound.createScriptProcessor(2048, 1, 1);
+      const mute = sound.createGain();
+      mute.gain.value = 0;
+      const ratio = sound.sampleRate / 24000;
+      processor.onaudioprocess = (event) => {
+        if (!micWanted || !ws || ws.readyState !== WebSocket.OPEN) return;
+        const input = event.inputBuffer.getChannelData(0);
+        const count = Math.floor(input.length / ratio);
+        const pcm = new Int16Array(count);
+        for (let i = 0; i < count; i += 1) {
+          const sample = input[Math.min(input.length - 1, Math.floor(i * ratio))];
+          pcm[i] = Math.max(-32768, Math.min(32767, Math.round(sample * 32767)));
+        }
+        ws.send(pcm.buffer);
+      };
+      source.connect(processor);
+      processor.connect(mute);
+      mute.connect(sound.destination);
+      micNode = processor;
+      document.getElementById("mic").textContent = "Microfone ligado";
+    }
+
+    document.getElementById("mic").addEventListener("click", () => {
+      enableMic().catch(() => {
+        noteEl.textContent = "o navegador não liberou o microfone";
+      });
+    });
+
+    document.getElementById("record").addEventListener("click", async () => {
+      if (!micNode) {
+        try { await enableMic(); } catch (err) {
+          noteEl.textContent = "ligue o microfone para gravar 3 s";
+          return;
+        }
+      }
+      await audioCtx().resume();
+      ws.send(JSON.stringify({ t: "loopback" }));
+    });
+
+    document.getElementById("tone").addEventListener("click", async () => {
+      ws.send(JSON.stringify({ t: "loopback" }));
+      const count = 24000 * 3;
+      const pcm = new Int16Array(count);
+      for (let i = 0; i < count; i += 1) {
+        pcm[i] = Math.round(Math.sin((2 * Math.PI * 440 * i) / 24000) * 12000);
+      }
+      const bytes = new Uint8Array(pcm.buffer);
+      const chunk = 24000 * 2;
+      for (let offset = 0; offset < bytes.length; offset += chunk) {
+        ws.send(bytes.slice(offset, offset + chunk));
+      }
+      try { await audioCtx().resume(); } catch (err) { /* a tela segue sem o speaker */ }
+    });
+
+    canvas.addEventListener("click", () => {
+      if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ t: "cancel" }));
+    });
+  </script>
+</body>
+</html>

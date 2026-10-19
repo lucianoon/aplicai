@@ -12,3 +12,7 @@ eval/.adk_eval_history/
 *.evalset_results.json
 mock_core/consentimentos.json
 mock_core/lembretes.json
+mina/.pio/
+mina/include/secrets.h
+mina/backend/.venv/
+mina/backend/**/*.egg-info/

@@ -1,5 +1,7 @@
 # Aplicaí: a sobra do mês rendendo, sem faltar para as contas
 
+**Português** | [English](README.en.md)
+
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Google ADK 2.x](https://img.shields.io/badge/Google_ADK-2.x-orange.svg)](https://github.com/google/agent-development-kit)
 [![CI](https://github.com/lucianoon/aplicai/actions/workflows/ci.yml/badge.svg)](https://github.com/lucianoon/aplicai/actions/workflows/ci.yml)
